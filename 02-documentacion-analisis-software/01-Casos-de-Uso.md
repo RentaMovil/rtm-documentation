@@ -62,10 +62,7 @@ precondición, postcondición y el requisito funcional del SRS que implementa.
 
 ### UC01 — Explorar catálogo de vehículos
 
-```mermaid
-flowchart LR
-    A(["Visitante"]) --> B(["Explorar catálogo de vehículos"])
-```
+![Caso de uso UC01](diagrams/uc/es/uc01.svg)
 
 | Campo | Valor |
 |-------|-------|
@@ -81,10 +78,7 @@ el catálogo público de vehículos, sin necesidad de registrarse.
 
 ### UC02 — Registrarse
 
-```mermaid
-flowchart LR
-    A(["Visitante"]) --> B(["Registrarse"])
-```
+![Caso de uso UC02](diagrams/uc/es/uc02.svg)
 
 | Campo | Valor |
 |-------|-------|
@@ -100,10 +94,7 @@ opcionalmente, teléfono, para crear su cuenta de Cliente.
 
 ### UC03 — Iniciar sesión
 
-```mermaid
-flowchart LR
-    A(["Cliente"]) --> B(["Iniciar sesión"])
-```
+![Caso de uso UC03](diagrams/uc/es/uc03.svg)
 
 | Campo | Valor |
 |-------|-------|
@@ -118,10 +109,7 @@ flowchart LR
 
 ### UC04 — Recuperar contraseña
 
-```mermaid
-flowchart LR
-    A(["Cliente"]) --> B(["Recuperar contraseña"])
-```
+![Caso de uso UC04](diagrams/uc/es/uc04.svg)
 
 | Campo | Valor |
 |-------|-------|
@@ -137,10 +125,7 @@ minutos) y lo usa junto con una contraseña nueva.
 
 ### UC05 — Gestionar mi perfil
 
-```mermaid
-flowchart LR
-    A(["Cliente"]) --> B(["Gestionar mi perfil"])
-```
+![Caso de uso UC05](diagrams/uc/es/uc05.svg)
 
 | Campo | Valor |
 |-------|-------|
@@ -156,10 +141,7 @@ su contraseña actual), y puede cambiar su contraseña desde la sesión activa.
 
 ### UC06 — Crear una reserva
 
-```mermaid
-flowchart LR
-    A(["Cliente"]) --> B(["Crear una reserva"])
-```
+![Caso de uso UC06](diagrams/uc/es/uc06.svg)
 
 | Campo | Valor |
 |-------|-------|
@@ -175,10 +157,7 @@ opcionalmente, un seguro, y acepta los términos y condiciones.
 
 ### UC07 — Ver y modificar mis reservas
 
-```mermaid
-flowchart LR
-    A(["Cliente"]) --> B(["Ver y modificar mis reservas"])
-```
+![Caso de uso UC07](diagrams/uc/es/uc07.svg)
 
 | Campo | Valor |
 |-------|-------|
@@ -194,10 +173,7 @@ la sucursal de devolución, siempre con al menos 3 días de anticipación.
 
 ### UC08 — Cancelar una reserva
 
-```mermaid
-flowchart LR
-    A(["Cliente"]) --> B(["Cancelar una reserva"])
-```
+![Caso de uso UC08](diagrams/uc/es/uc08.svg)
 
 | Campo | Valor |
 |-------|-------|
@@ -213,10 +189,7 @@ menos 3 días para la fecha de recogida.
 
 ### UC09 — Pagar una reserva
 
-```mermaid
-flowchart LR
-    A(["Cliente"]) --> B(["Pagar una reserva"])
-```
+![Caso de uso UC09](diagrams/uc/es/uc09.svg)
 
 | Campo | Valor |
 |-------|-------|
@@ -232,10 +205,7 @@ comprobante de pago para que un Administrador lo revise.
 
 ### UC10 — Consultar mis facturas
 
-```mermaid
-flowchart LR
-    A(["Cliente"]) --> B(["Consultar mis facturas"])
-```
+![Caso de uso UC10](diagrams/uc/es/uc10.svg)
 
 | Campo | Valor |
 |-------|-------|
@@ -251,10 +221,7 @@ pago aprobado.
 
 ### UC11 — Ver mis notificaciones
 
-```mermaid
-flowchart LR
-    A(["Cliente"]) --> B(["Ver mis notificaciones"])
-```
+![Caso de uso UC11](diagrams/uc/es/uc11.svg)
 
 | Campo | Valor |
 |-------|-------|
@@ -270,10 +237,7 @@ sus reservas y pagos.
 
 ### UC12 — Gestionar vehículos
 
-```mermaid
-flowchart LR
-    A(["Administrador"]) --> B(["Gestionar vehículos"])
-```
+![Caso de uso UC12](diagrams/uc/es/uc12.svg)
 
 | Campo | Valor |
 |-------|-------|
@@ -289,10 +253,7 @@ completo filtrando por estado.
 
 ### UC13 — Gestionar sucursales
 
-```mermaid
-flowchart LR
-    A(["Administrador"]) --> B(["Gestionar sucursales"])
-```
+![Caso de uso UC13](diagrams/uc/es/uc13.svg)
 
 | Campo | Valor |
 |-------|-------|
@@ -307,10 +268,7 @@ flowchart LR
 
 ### UC14 — Gestionar mantenimiento de la flota
 
-```mermaid
-flowchart LR
-    A(["Administrador"]) --> B(["Gestionar mantenimiento de la flota"])
-```
+![Caso de uso UC14](diagrams/uc/es/uc14.svg)
 
 | Campo | Valor |
 |-------|-------|
@@ -326,10 +284,7 @@ vehículo, y consulta su historial.
 
 ### UC15 — Registrar recogida y devolución
 
-```mermaid
-flowchart LR
-    A(["Administrador"]) --> B(["Registrar recogida y devolución"])
-```
+![Caso de uso UC15](diagrams/uc/es/uc15.svg)
 
 | Campo | Valor |
 |-------|-------|
@@ -345,10 +300,7 @@ vehículo, con el kilometraje inicial y final.
 
 ### UC16 — Revisar comprobantes de pago
 
-```mermaid
-flowchart LR
-    A(["Administrador"]) --> B(["Revisar comprobantes de pago"])
-```
+![Caso de uso UC16](diagrams/uc/es/uc16.svg)
 
 | Campo | Valor |
 |-------|-------|
@@ -364,10 +316,7 @@ rechazarlo.
 
 ### UC17 — Administrar reservas de la empresa
 
-```mermaid
-flowchart LR
-    A(["Administrador"]) --> B(["Administrar reservas de la empresa"])
-```
+![Caso de uso UC17](diagrams/uc/es/uc17.svg)
 
 | Campo | Valor |
 |-------|-------|
@@ -383,10 +332,7 @@ gestiona los planes de seguro disponibles.
 
 ### UC18 — Rastrear ubicación de vehículos
 
-```mermaid
-flowchart LR
-    A(["Administrador"]) --> B(["Rastrear ubicación de vehículos"])
-```
+![Caso de uso UC18](diagrams/uc/es/uc18.svg)
 
 | Campo | Valor |
 |-------|-------|
@@ -402,10 +348,7 @@ historial completo de un alquiler ya finalizado.
 
 ### UC19 — Gestionar planes de seguro
 
-```mermaid
-flowchart LR
-    A(["Administrador"]) --> B(["Gestionar planes de seguro"])
-```
+![Caso de uso UC19](diagrams/uc/es/uc19.svg)
 
 | Campo | Valor |
 |-------|-------|
@@ -421,10 +364,7 @@ All-Risk) que el Cliente puede elegir al reservar.
 
 ### UC20 — Gestionar usuarios administrativos
 
-```mermaid
-flowchart LR
-    A(["Super Admin"]) --> B(["Gestionar usuarios administrativos"])
-```
+![Caso de uso UC20](diagrams/uc/es/uc20.svg)
 
 | Campo | Valor |
 |-------|-------|
@@ -440,10 +380,7 @@ cuentas de usuario.
 
 ### UC21 — Gestionar cuentas bancarias
 
-```mermaid
-flowchart LR
-    A(["Super Admin"]) --> B(["Gestionar cuentas bancarias"])
-```
+![Caso de uso UC21](diagrams/uc/es/uc21.svg)
 
 | Campo | Valor |
 |-------|-------|
