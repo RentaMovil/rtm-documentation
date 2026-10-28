@@ -141,14 +141,14 @@ Tabla 2. Estado de cada componente
 
 | Componente | Estado | Nota |
 | --- | --- | --- |
-| Frontend web | Operativo | Conectado al gateway para autenticación, usuarios, vehículos, sucursales, mantenimiento, reservas, alquileres, seguros y notificaciones. Los pagos, las cuentas bancarias y el GPS se sirven desde el mock. |
+| Frontend web | Operativo | Conectado al gateway para autenticación, usuarios, vehículos, sucursales, mantenimiento, reservas, alquileres, seguros y notificaciones. Los pagos, las cuentas bancarias, las facturas y el seguimiento GPS también van por el gateway. |
 | Aplicación móvil | Parcial | La autenticación y las notificaciones apuntan al mock antiguo (puerto 3001, rutas /auth/*); las sucursales, los seguros, las reservas y los pagos usan datos locales. Aún no está conectada al gateway. |
-| rtm-api-gateway | Operativo | Enruta los cinco servicios; los dos planeados responden 503 hasta que existan. |
+| rtm-api-gateway | Operativo | Enruta los cinco servicios de negocio (iam, fleet-maintenance, booking-reservation, payment-billing y telemetry-gps); responde 503 si alguno está caído. |
 | rtm-iam | Operativo | Todas las operaciones de identidad, perfil y administración de usuarios. |
 | rtm-fleet-maintenance | Operativo (rama develop) | Vehículos, inventario, disponibilidad, sucursales, mantenimiento y catálogos. |
-| rtm-booking-reservation | Operativo con dependencias pendientes | Crear una reserva responde 409 FLEET_SERVICE_UNAVAILABLE porque su adaptador de flota todavía es provisional. Confirmar una reserva requiere payment-billing o un evento manual en /internal/events. |
-| payment-billing (:3004) | Planeado | Reemplazado por el mock (/payments, /bank-accounts). |
-| telemetry-gps (:3005) | Planeado | Reemplazado por el mock (/gps, /locations). |
+| rtm-booking-reservation | Operativo | Consulta a fleet-maintenance con un adaptador HTTP real (FleetVehicleClientAdapter) y reenvía eventos a fleet y telemetry. La reserva se confirma al aprobarse el pago en payment-billing. |
+| payment-billing (:3004) | Operativo | Pagos por transferencia con revisión manual, cuentas bancarias y facturas (/payments, /invoices, /bank-accounts). |
+| telemetry-gps (:3005) | Operativo | Ingesta de ubicaciones y consulta de seguimiento e historial (/locations, /tracking, /gps). |
 
 # 5. Tecnologías utilizadas
 
@@ -954,21 +954,19 @@ Todos los repositorios usan Git y están en GitHub (organización RentaMovil; rt
 | El gateway responde 503 SERVICE_UNAVAILABLE | El servicio de destino no está corriendo, o la URL en .env es incorrecta. | Levante el servicio y revise IAM_URL, FLEET_URL, BOOKING_URL; consulte el GET /health del gateway. |
 | Todas las peticiones autenticadas responden 401 INVALID_TOKEN | El gateway o el servicio no tiene la clave pública correcta, o el reloj de la máquina está desfasado. | Verifique que iam esté arriba (/auth/jwks) y que APP_*_JWT_PUBLIC_KEY coincida con el par de iam. |
 | Un servicio no arranca: error de validación de esquema | La entidad JPA no coincide con la tabla (ddl-auto=validate). | Aplique las migraciones pendientes del repositorio *-db o corrija la entidad. |
-| Crear una reserva responde 409 FLEET_SERVICE_UNAVAILABLE | booking-reservation todavía usa su adaptador de flota provisional. | Comportamiento esperado hasta que booking se conecte con fleet-maintenance. |
+| Crear una reserva responde 409 FLEET_SERVICE_UNAVAILABLE | fleet-maintenance no responde o su URL en el .env de booking es incorrecta. | Levante fleet-maintenance y revise la URL del servicio de flota en booking-reservation. |
 | El navegador muestra un error de CORS | El origen del frontend no está en CORS_ALLOWED_ORIGINS. | Agregue el origen (por ejemplo, http://localhost:5173) al .env del gateway. |
 | El login responde 429 | Límite de peticiones del gateway (10 intentos cada 5 min por IP). | Espere el tiempo de Retry-After; en desarrollo se pueden ajustar RATE_LIMIT_*. |
 | Liquibase falla con 'Missing parameter.*AppPassword' | Falta la contraseña del usuario del servicio en liquibase.properties. | Copie liquibase.properties.example y complete el parámetro. |
 | El código de recuperación no llega al correo | En desarrollo iam usa LogEmailSenderAdapter: el código se escribe en el log del servicio. | Busque '[EMAIL DE DESARROLLO]' en el log de rtm-iam; en producción hay que implementar un adaptador de correo real. |
-| Pagos, cuentas bancarias o GPS sin datos en la web | El mock (puerto 3100) no está corriendo. | Ejecute npm run mock-api en web/Front-end o levante el contenedor rentamovil-mock-api. |
+| Pagos, cuentas bancarias o GPS sin datos en la web | payment-billing o telemetry-gps no está arriba, o el gateway no los alcanza. | Revise el GET /health del gateway y levante el servicio caído. |
 
 ## 13.2 Deuda técnica y limitaciones conocidas
 
-• booking-reservation usa un adaptador de flota provisional: crear reservas responde 409 hasta que se conecte con fleet-maintenance.
-• payment-billing y telemetry-gps no existen; el frontend usa el mock para pagos, cuentas bancarias y GPS. La acción posterior a rechazar un pago (volver a subir o cancelar) todavía no se envía.
+• Al rechazar un pago, la acción posterior (volver a subir el comprobante o cancelar) todavía no está completa en el frontend.
 • La aplicación móvil sigue apuntando al mock antiguo (puerto 3001 y rutas /auth/* que hoy pertenecen a iam) y usa datos locales para sucursales, seguros, reservas y pagos.
 • El límite de peticiones del gateway mantiene los contadores en memoria; con varios gateways debe implementarse un RateLimiter sobre Redis.
 • El envío de correos de iam es un adaptador de desarrollo que escribe el código en el log; en producción debe reemplazarse por un proveedor de correo.
-• La tabla de enrutamiento del gateway no incluye /maintenances ni los catálogos de referencia que consume el frontend web.
 • Las imágenes se suben desde el navegador a Cloudinary con un preset unsigned; conviene pasarlo a variables de entorno o firmarlo desde el backend.
 
 # 14. Glosario
