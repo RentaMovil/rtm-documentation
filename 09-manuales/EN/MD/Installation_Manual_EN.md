@@ -30,6 +30,7 @@ Version control
 | --- | --- | --- | --- |
 | 1.0 | 09/07/2026 | Initial creation of the installation manual. | Development team |
 | 2.0 | 07/10/2026 | Update to match the current architecture: SQL Server in Docker, Liquibase migrations per schema, RS256 JWT keys, the iam, fleet-maintenance and booking-reservation microservices, API Gateway, web frontend with API mock, mobile app, first Super Admin, verification and common errors. | Development team |
+| 2.1 | 27/10/2026 | payment-billing and telemetry-gps are added (schemas, services and migration order), the API mock is removed and the mobile app now consumes the API Gateway. | Development team |
 
 Table of contents
 
@@ -76,7 +77,7 @@ Table of contents
 
 This manual explains how to prepare a machine, obtain the code, configure and start all RentaMovil components in a local development or testing environment, and how to verify that the installation is correct.
 
-RentaMovil is made up of several repositories that are installed separately and communicate over a Docker network called rentamovil: a SQL Server (Microsoft, n.d.) database, three migration repositories, three Java microservices, an API Gateway, the web frontend with its API mock, and the mobile app. That is why installation order matters, and it is indicated in each step.
+RentaMovil is made up of several repositories that are installed separately and communicate over a Docker network called rentamovil: a SQL Server (Microsoft, n.d.) database, five migration repositories (iam, fleet, telemetry, booking and payment), five Java microservices (iam, fleet-maintenance, booking-reservation, payment-billing and telemetry-gps), an API Gateway, the web frontend and the mobile app. That is why installation order matters, and it is indicated in each step.
 
 ## 1.1 Conventions
 
@@ -118,7 +119,7 @@ Table 2. Required software
 | Docker Desktop (Docker Inc., n.d.) (or Docker Engine) | 24.0 or later, with Docker Compose 2.20+ | SQL Server, migrations and the service containers. | docker --version / docker compose version |
 | Java JDK (Oracle Corporation, n.d.) | 21 (Eclipse Temurin recommended) | Compile and run the microservices outside Docker. | java -version |
 | Apache Maven (Apache Software Foundation, n.d.) | 3.9 or later | Dependencies, tests, running and Liquibase migrations (Liquibase, n.d.). | mvn -version |
-| Node.js (OpenJS Foundation, n.d.) + npm | Node 22 LTS and npm 10 or later | Web frontend, API mock and mobile app. | node -v / npm -v |
+| Node.js (OpenJS Foundation, n.d.) + npm | Node 22 LTS and npm 10 or later | Web frontend and mobile app. | node -v / npm -v |
 | OpenSSL (OpenSSL Software Foundation, n.d.) | Included in Git Bash, Linux and macOS | Generate the RS256 JWT key pair. | openssl version |
 | Code editor | Visual Studio Code or IntelliJ IDEA | Edit .env files and review the code. | — |
 | Database client (optional) | SQL Server Management Studio or Azure Data Studio | Query the database and create the first Super Admin. | — |
@@ -193,8 +194,8 @@ Table 4. Dependency installation commands
 | Component | Folder | Command |
 | --- | --- | --- |
 | Database repositories | rtm-*-db | mvn -q dependency:resolve (optional; Liquibase does it when running) |
-| Microservices and gateway | rtm-iam, rtm-fleet-maintenance, rtm-booking-reservation, rtm-api-gateway | mvn install -DskipTests |
-| Web frontend and API mock | RentaMovil/web/Front-end | npm install |
+| Microservices and gateway | rtm-iam, rtm-fleet-maintenance, rtm-booking-reservation, rtm-payment-billing, rtm-telemetry-gps, rtm-api-gateway | mvn install -DskipTests |
+| Web frontend | RentaMovil/web/Front-end | npm install |
 | Mobile app | RentaMovil/app_mobile/Frontend | npm install |
 
 The first Maven and npm download may take several minutes; later ones use the cache.
@@ -205,16 +206,19 @@ Each repository includes example files (.env.example and, in the database reposi
 
 ## 7.1 Passwords that must match
 
-Define these four passwords first and use them consistently. They must comply with the SQL Server policy: 8 or more characters with uppercase, lowercase, number and symbol.
+Define these passwords first and use them consistently. They must comply with the SQL Server policy: 8 or more characters with uppercase, lowercase, number and symbol.
 
 Table 5. Passwords shared across repositories
 
 | Password | Where it is written |
 | --- | --- |
-| SQL Server administrator (sa) | MSSQL_SA_PASSWORD in the .env of rtm-iam-db, rtm-fleet-maintenance-db and rtm-booking-db; password in each liquibase.properties. |
+| SQL Server administrator (sa) | MSSQL_SA_PASSWORD in the .env of rtm-iam-db, rtm-fleet-maintenance-db, rtm-telemetry-gps-db, rtm-booking-db and rtm-payment-billing-db; password in each liquibase.properties. |
 | iam_app user | IAM_APP_PASSWORD in rtm-iam-db/.env; parameter.iamAppPassword in rtm-iam-db/liquibase.properties; DATABASE_PASSWORD in rtm-iam/.env. |
 | fleet_app user | FLEET_APP_PASSWORD in rtm-fleet-maintenance-db/.env; parameter.fleetAppPassword in its liquibase.properties; DATABASE_PASSWORD in rtm-fleet-maintenance/.env. |
 | booking_app user | BOOKING_APP_PASSWORD in rtm-booking-db/.env; parameter.bookingAppPassword in its liquibase.properties; DATABASE_PASSWORD in rtm-booking-reservation/.env. |
+| telemetry_app user | TELEMETRY_APP_PASSWORD in rtm-telemetry-gps-db/.env; parameter.telemetryAppPassword in its liquibase.properties; DATABASE_PASSWORD in rtm-telemetry-gps/.env. |
+| payment_app user | parameter.paymentAppPassword in rtm-payment-billing-db/liquibase.properties (and the password variable in its .env.example); DATABASE_PASSWORD in rtm-payment-billing/.env. |
+| Internal key between services | APP_INTERNAL_API_KEY: the SAME value in rtm-booking-reservation, rtm-fleet-maintenance, rtm-payment-billing and rtm-telemetry-gps (X-Internal-Key header). |
 
 ## 7.2 Database repositories
 
@@ -224,7 +228,7 @@ cp .env.example .env
 
 cp liquibase.properties.example liquibase.properties
 
-# repeat in rtm-fleet-maintenance-db and rtm-booking-db
+# repeat in rtm-fleet-maintenance-db, rtm-telemetry-gps-db, rtm-booking-db and rtm-payment-billing-db
 
 # rtm-iam-db/.env
 
@@ -260,21 +264,23 @@ sed '/-----/d' pub.pem | tr -d '\r\n' # APP_IAM_JWT_PUBLIC_KEY value
 
 rm priv.pem pub.pem # do not leave the keys on disk
 
-Each value is copied on a single line, without the BEGIN/END lines. The public key is used in rtm-iam (APP_IAM_JWT_PUBLIC_KEY) and in rtm-booking-reservation (APP_BOOKING_RESERVATION_JWT_PUBLIC_KEY). iam does not start if the keys are missing, are shorter than 2048 bits or do not form a pair.
+Each value is copied on a single line, without the BEGIN/END lines. The public key is used in rtm-iam (APP_IAM_JWT_PUBLIC_KEY) in rtm-booking-reservation (APP_BOOKING_RESERVATION_JWT_PUBLIC_KEY) and in rtm-telemetry-gps (APP_TELEMETRY_GPS_JWT_PUBLIC_KEY); fleet-maintenance and payment-billing download it from iam's GET /jwks endpoint through IAM_URL. iam does not start if the keys are missing, are shorter than 2048 bits or do not form a pair.
 
 ## 7.4 Microservices and gateway
 
 cd rtm-iam && cp .env.example .env
 
-# repeat in rtm-fleet-maintenance, rtm-booking-reservation and rtm-api-gateway
+# repeat in rtm-fleet-maintenance, rtm-booking-reservation, rtm-payment-billing, rtm-telemetry-gps and rtm-api-gateway
 
 Table 6. Main variables per service
 
 | File | Variables to fill in | Local value |
 | --- | --- | --- |
 | rtm-iam/.env | DATABASE_URL, DATABASE_USERNAME, DATABASE_PASSWORD, APP_IAM_PORT, APP_IAM_JWT_PRIVATE_KEY, APP_IAM_JWT_PUBLIC_KEY, APP_IAM_JWT_EXPIRY, APP_IAM_REFRESH_TOKEN_EXPIRY, APP_IAM_BCRYPT_ROUNDS | iam_app user; port 3001; keys from step 7.3; 1800, 604800 and 12 by default. |
-| rtm-fleet-maintenance/.env | DATABASE_URL, DATABASE_USERNAME, DATABASE_PASSWORD, APP_FLEET_MAINTENANCE_PORT, IAM_URL, BOOKING_URL, BOOKING_TIMEOUT | fleet_app user; port 3002; http://localhost:3001 and http://localhost:3003. |
-| rtm-booking-reservation/.env | DATABASE_URL, DATABASE_USERNAME, DATABASE_PASSWORD, APP_BOOKING_RESERVATION_PORT, APP_BOOKING_RESERVATION_JWT_PUBLIC_KEY, APP_BOOKING_RESERVATION_PAYMENT_WINDOW_HOURS | booking_app user; port 3003; iam public key; 24 hours. |
+| rtm-fleet-maintenance/.env | DATABASE_URL, DATABASE_USERNAME, DATABASE_PASSWORD, APP_FLEET_MAINTENANCE_PORT, IAM_URL, BOOKING_URL, BOOKING_TIMEOUT, RETIRE_RESERVATION_HORIZON_DAYS, APP_INTERNAL_API_KEY | fleet_app user; port 3002; http://localhost:3001 and http://localhost:3003. |
+| rtm-booking-reservation/.env | DATABASE_URL, DATABASE_USERNAME, DATABASE_PASSWORD, APP_BOOKING_RESERVATION_PORT, APP_BOOKING_RESERVATION_JWT_PUBLIC_KEY, IAM_URL, FLEET_URL, TELEMETRY_URL, APP_BOOKING_RESERVATION_PAYMENT_WINDOW_HOURS, APP_INTERNAL_API_KEY | booking_app user; port 3003; iam, fleet and telemetry URLs; 24 hours. |
+| rtm-payment-billing/.env | DATABASE_URL, DATABASE_USERNAME, DATABASE_PASSWORD, APP_PAYMENT_BILLING_PORT, IAM_URL, BOOKING_URL, APP_PAYMENT_BILLING_FILE_ALLOWED_PREFIX, APP_PAYMENT_BILLING_INVOICE_STORAGE_DIR, APP_INTERNAL_API_KEY | payment_app user; port 3004; local invoice folder (./invoices-storage). |
+| rtm-telemetry-gps/.env | DATABASE_URL, DATABASE_USERNAME, DATABASE_PASSWORD, APP_TELEMETRY_GPS_PORT, APP_TELEMETRY_GPS_JWT_PUBLIC_KEY, APP_TELEMETRY_GPS_DEVICE_API_KEY, BOOKING_URL, APP_INTERNAL_API_KEY | telemetry_app user; port 3005; iam public key; one key for the test GPS devices. |
 | rtm-api-gateway/.env | GATEWAY_PORT, IAM_URL, FLEET_URL, BOOKING_URL, PAYMENT_URL, TELEMETRY_URL, CORS_ALLOWED_ORIGINS, RATE_LIMIT_* | Port 8080; the values in .env.example work for local. |
 
 The local database URL is jdbc:sqlserver://localhost:1433;databaseName=rentamovil;encrypt=true;trustServerCertificate=true. Inside Docker, each docker-compose.yml changes it automatically to use the container name (sqlserver).
@@ -285,7 +291,6 @@ The RentaMovil/web/Front-end/.env file already contains the local values and has
 
 VITE_API_URL=/api # Vite proxy to the gateway (localhost:8080)
 
-VITE_MOCK_API_URL=/mock # Vite proxy to the mock (localhost:3100)
 
 VITE_CLOUDINARY_CLOUD_NAME=<Cloudinary cloud name>
 
@@ -323,7 +328,15 @@ docker compose up --build
 
 The migrations container ends in Exited (0). Alternative without Docker: mvn liquibase:update.
 
-### 8.4 booking schema
+### 8.4 telemetry schema
+
+cd ../rtm-telemetry-gps-db
+
+docker compose up --build
+
+It must run before booking, because booking.rental.gps_id points to telemetry.gps. Alternative without Docker: mvn liquibase:update.
+
+### 8.5 booking schema
 
 cd ../rtm-booking-db
 
@@ -331,7 +344,15 @@ docker compose up --build
 
 Alternative without Docker: mvn liquibase:update.
 
-### 8.5 Check the migrations
+### 8.6 payment schema
+
+cd ../rtm-payment-billing-db
+
+docker compose up --build
+
+It must run last: its foreign keys point to booking.reservation and iam.[user]. Alternative without Docker: mvn liquibase:update.
+
+### 8.7 Check the migrations
 
 From each database repository:
 
@@ -339,11 +360,11 @@ mvn liquibase:status # must report no pending changesets
 
 When using parameters, the Maven plugin may print a NoSuchFieldException about parameter.*AppPassword. It is harmless; what matters is the final BUILD SUCCESS.
 
-Each schema stores its history in its own table: dbo.DATABASECHANGELOG_IAM, dbo.DATABASECHANGELOG_FLEET and dbo.DATABASECHANGELOG_BOOKING.
+Each schema stores its history in its own table: dbo.DATABASECHANGELOG_IAM, dbo.DATABASECHANGELOG_FLEET, dbo.DATABASECHANGELOG_TELEMETRY, dbo.DATABASECHANGELOG_BOOKING and dbo.DATABASECHANGELOG_PAYMENT.
 
 # 9. Running the backend
 
-Start the services in this order: rtm-iam → rtm-fleet-maintenance → rtm-booking-reservation → rtm-api-gateway. You can do this with Docker (recommended) or directly with Maven; do not use both methods at once for the same service, because they use the same port.
+Start the services in this order: rtm-iam → rtm-fleet-maintenance → rtm-booking-reservation → rtm-payment-billing → rtm-telemetry-gps → rtm-api-gateway. You can do this with Docker (recommended) or directly with Maven; do not use both methods at once for the same service, because they use the same port.
 
 ## 9.1 With Docker
 
@@ -353,9 +374,13 @@ cd ../rtm-fleet-maintenance && docker compose up -d --build
 
 cd ../rtm-booking-reservation && docker compose up -d --build
 
+cd ../rtm-payment-billing && docker compose up -d --build
+
+cd ../rtm-telemetry-gps && docker compose up -d --build
+
 cd ../rtm-api-gateway && docker compose up -d --build
 
-docker ps # rentamovil-iam, -fleet-maintenance, -booking-reservation, -api-gateway: Up
+docker ps # rentamovil-iam, -fleet-maintenance, -booking-reservation, -payment-billing, -telemetry-gps, -api-gateway: Up
 
 The first build takes several minutes because it downloads the dependencies inside the image; later ones are fast.
 
@@ -372,21 +397,19 @@ Table 7. Backend services
 | rtm-iam | 3001 | rentamovil-iam | curl http://localhost:3001/health |
 | rtm-fleet-maintenance | 3002 | rentamovil-fleet-maintenance | curl http://localhost:3002/health |
 | rtm-booking-reservation | 3003 | rentamovil-booking-reservation | curl http://localhost:3003/health |
+| rtm-payment-billing | 3004 | rentamovil-payment-billing | curl http://localhost:3004/health |
+| rtm-telemetry-gps | 3005 | rentamovil-telemetry-gps | curl http://localhost:3005/health |
 | rtm-api-gateway | 8080 | rentamovil-api-gateway | curl http://localhost:8080/health |
 
-Each service responds {"status":"ok","db":"connected",...}. The gateway responds with the status of each service; payment-billing and telemetry-gps appear as down because they do not exist yet, and that is normal.
+Each service responds {"status":"ok","db":"connected",...}. The gateway responds with the status of each service (ok, degraded or down).
 
 # 10. Running the frontend
 
 ## 10.1 Web frontend in development mode
 
-Open two terminals in RentaMovil/web/Front-end:
+Open one terminal in RentaMovil/web/Front-end:
 
-# Terminal 1: API mock (payments, bank accounts and GPS) on port 3100
-
-npm run mock-api
-
-# Terminal 2: web application on port 5173
+# Web application on port 5173
 
 npm run dev
 
@@ -396,7 +419,7 @@ With the backend already up on the rentamovil network:
 
 cd RentaMovil/web/Front-end
 
-docker compose up -d --build # web at http://localhost:4173 and the mock on the network
+docker compose up -d --build # web at http://localhost:4173
 
 ## 10.3 Mobile app
 
@@ -406,7 +429,7 @@ npx expo start
 
 Scan the QR code with Expo Go (Android) or with the camera (iOS), or press a for the Android emulator and w for the web version.
 
-Current limitation: the mobile app is not yet connected to the API Gateway. It uses the old mock and local data, so signing in against the new backend does not work from the app (see section 15).
+The mobile app consumes the API Gateway: it must be running before you sign in. On the emulator or the web version the default value is enough (http://localhost:8080); on a physical phone set EXPO_PUBLIC_API_URL to your machine's IP (for example, http://192.168.1.50:8080).
 
 # 11. System access
 
@@ -417,7 +440,6 @@ Table 8. Access addresses
 | Web application (development) | http://localhost:5173 | Sign-in screen. |
 | Web application (Docker) | http://localhost:4173 | Same application served by the rentamovil-web container. |
 | API Gateway | http://localhost:8080 | API entry point; /health shows the status of the services. |
-| API mock | http://localhost:3100 | Payments, bank accounts and GPS. |
 | SQL Server | localhost,1433 | sa user with the password defined in step 7.1 (only for database administration). |
 
 # 12. Test user
@@ -469,7 +491,7 @@ Table 9. Checklist
 | Data in the database | Search vehicles by branch and dates | The search responds (with vehicles if the administrator has already registered any). |
 | Administration | Sign in with the Super Admin (12.2) | Administration appears in the bar and the panel shows all sections. |
 | Persistence | Register a branch or a vehicle and reload the page | The record still appears. |
-| Mock | Open Administration > Bank accounts | The mock accounts are shown. |
+| Payments | Open Administration > Bank accounts | The list of collection accounts is loaded from payment-billing (empty if none has been registered yet). |
 
 # 14. Common errors and solutions
 
@@ -479,26 +501,26 @@ Table 10. Frequent errors
 | --- | --- | --- |
 | network rentamovil declared as external, but could not be found | The shared network was not created. | docker network create rentamovil and repeat the command. |
 | rentamovil-sqlserver stops on startup | The sa password does not comply with the SQL Server policy or memory is insufficient. | Use 8+ characters with uppercase, lowercase, number and symbol; assign at least 2 GB of RAM to Docker. |
-| Port is already allocated (1433, 3001, 3002, 3003, 8080, 5173 or 3100) | Another process, or the same service run with Maven and Docker at the same time. | Stop the duplicate process (netstat -ano \| findstr :PORT on Windows) or change the port in the .env. |
-| Missing parameter.iamAppPassword (or fleet / booking) | The service user password is missing in liquibase.properties or in the .env. | Fill in the parameter and run the migrations again. |
-| The fleet or booking migrations fail because of iam objects | They were run before rtm-iam-db. | Respect the order: iam-db → fleet-db → booking-db. |
+| Port is already allocated (1433, 3001, 3002, 3003, 3004, 3005, 8080, 5173 or 4173) | Another process, or the same service run with Maven and Docker at the same time. | Stop the duplicate process (netstat -ano \| findstr :PORT on Windows) or change the port in the .env. |
+| Missing parameter.iamAppPassword (or fleet / telemetry / booking / payment) | The service user password is missing in liquibase.properties or in the .env. | Fill in the parameter and run the migrations again. |
+| The fleet or booking migrations fail because of iam objects | They were run before rtm-iam-db. | Respect the order: iam-db → fleet-db → telemetry-db → booking-db → payment-db. |
 | A service does not start: schema validation error (Hibernate) | Migrations are missing, or the code and the schema come from different branches. | Run mvn liquibase:update and use the branches from section 5.1. |
 | Login failed for user 'iam_app' (or fleet_app / booking_app) | DATABASE_PASSWORD does not match the parameter used in the migration. | Make the passwords match according to table 7.1. |
 | iam does not start: invalid JWT keys | Empty keys, with line breaks, with the BEGIN/END lines, or that do not form a pair. | Regenerate them with step 7.3 and paste them on a single line. |
 | 401 INVALID_TOKEN on all booking requests | APP_BOOKING_RESERVATION_JWT_PUBLIC_KEY is not iam's public key. | Copy the same APP_IAM_JWT_PUBLIC_KEY. |
 | The gateway responds 503 SERVICE_UNAVAILABLE | The target service is not up. | Start it and check the gateway /health. |
 | Creating a reservation responds 409 FLEET_SERVICE_UNAVAILABLE | Known limitation of booking-reservation (provisional fleet adapter). | Expected behaviour in this version. |
-| Blank screen or network errors on the web | Gateway or mock are down, or the frontend .env was modified. | Check the browser console (F12), bring up the gateway and run npm run mock-api. |
+| Blank screen or network errors on the web | The gateway is down, or the frontend .env was modified. | Check the browser console (F12) and bring up the gateway. |
 | The password recovery code does not arrive | In development iam does not send emails: it writes the code in its log. | docker logs rentamovil-iam and look for [EMAIL DE DESARROLLO]. |
 | 429 when signing in | Limit of 10 attempts every 5 minutes per IP. | Wait or adjust RATE_LIMIT_* in the gateway .env. |
 | java, mvn or npm not recognized | The tool is not installed or is not in the PATH. | Install it and open a new terminal. |
 
 # 15. Known limitations of the installed version
 
-• Creating reservations responds 409 until booking-reservation connects to fleet-maintenance.
-• The payment-billing and telemetry-gps services do not exist: payments, bank accounts and GPS are served from the mock (port 3100).
-• The mobile app is not connected to the API Gateway.
-• The gateway does not yet route /maintenances nor the reference catalogs used by the web app; until they are added, those administration screens do not load data through the gateway.
+• Events between services travel over HTTP with no broker or outbox: if a destination service is down, the event is lost and only remains in the log (ADR-012).
+• The gateway rate-limit counters and the iam failed-login counter are in memory: with several instances they require Redis.
+• Payment is a bank transfer manually reviewed by an administrator; there is no payment gateway (ADR-013).
+• Invoices are stored in a local folder of the payment-billing service (invoices-storage); persistent storage is advisable in production.
 • iam email sending is development-grade (it writes to the log).
 
 # 16. Glossary
@@ -516,7 +538,6 @@ Table 10. Frequent errors
 | .env file | Local file with a component's configuration and secrets; it is not uploaded to the repository. |
 | JWT / RS256 | Session token signed with an RSA key pair. |
 | API Gateway | Service that receives all requests and forwards them to the correct microservice. |
-| API mock | Mock server for the functions whose real service does not exist yet. |
 | Health check | /health endpoint that indicates whether a service and its database are working. |
 | Maven / npm | Dependency and build managers for Java and JavaScript. |
 | Expo Go | Phone app used to run the mobile app in development. |
@@ -550,14 +571,18 @@ Oracle Corporation. (n.d.). *Java SE documentation*. https://docs.oracle.com/en/
 | 1 | Create the network | docker network create rentamovil |
 | 2 | SQL Server + iam schema | cd rtm-iam-db && docker compose up -d |
 | 3 | fleet schema | cd rtm-fleet-maintenance-db && docker compose up --build |
-| 4 | booking schema | cd rtm-booking-db && docker compose up --build |
-| 5 | JWT keys and .env files | openssl genpkey ... / cp .env.example .env |
-| 6 | iam service | cd rtm-iam && docker compose up -d --build |
-| 7 | fleet-maintenance service | cd rtm-fleet-maintenance && docker compose up -d --build |
-| 8 | booking-reservation service | cd rtm-booking-reservation && docker compose up -d --build |
-| 9 | API Gateway | cd rtm-api-gateway && docker compose up -d --build |
-| 10 | API mock and web | npm run mock-api and npm run dev |
-| 11 | First Super Admin | UPDATE iam.[user] ... (section 12.2) |
+| 4 | telemetry schema | cd rtm-telemetry-gps-db && docker compose up --build |
+| 5 | booking schema | cd rtm-booking-db && docker compose up --build |
+| 6 | payment schema | cd rtm-payment-billing-db && docker compose up --build |
+| 7 | JWT keys and .env files | openssl genpkey ... / cp .env.example .env |
+| 8 | iam service | cd rtm-iam && docker compose up -d --build |
+| 9 | fleet-maintenance service | cd rtm-fleet-maintenance && docker compose up -d --build |
+| 10 | booking-reservation service | cd rtm-booking-reservation && docker compose up -d --build |
+| 11 | payment-billing service | cd rtm-payment-billing && docker compose up -d --build |
+| 12 | telemetry-gps service | cd rtm-telemetry-gps && docker compose up -d --build |
+| 13 | API Gateway | cd rtm-api-gateway && docker compose up -d --build |
+| 14 | Web frontend | npm run dev |
+| 15 | First Super Admin | UPDATE iam.[user] ... (section 12.2) |
 
 ## Annex B. Operation commands
 

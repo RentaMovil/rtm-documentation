@@ -55,7 +55,7 @@ Tabla de contenido
     - 7.5 Reservar y pagar después
     - 7.6 Consulta de mis reservas
     - 7.7 Cambio de sucursal de devolución
-    - 7.8 Cancelación de reservas
+    - 7.8 Política de cancelación y fecha de devolución
     - 7.9 Notificaciones
     - 7.10 Mi cuenta (perfil)
     - 7.11 Cambio de dirección de correo
@@ -81,7 +81,7 @@ El documento está dirigido a cualquier persona que quiera rentar un vehículo a
 
 RentaMovil es un sistema de alquiler de vehículos que permite a los clientes consultar la flota disponible en una sucursal para fechas dadas, filtrar los resultados, reservar el vehículo elegido con o sin seguro, y pagar la reserva por transferencia bancaria adjuntando el comprobante. Un administrador valida el pago y confirma la reserva.
 
-El cliente puede consultar el estado de sus reservas en cualquier momento, cambiar la sucursal de devolución o cancelar una reserva dentro de los plazos permitidos, recibir notificaciones sobre sus reservas y pagos, y personalizar su perfil, el tema visual y el idioma de la interfaz (español, inglés, francés y portugués).
+El cliente puede consultar el estado de sus reservas en cualquier momento, cambiar la sucursal de devolución (la fecha de devolución es fija y la reserva no puede ser cancelada por el cliente), recibir notificaciones sobre sus reservas y pagos, y personalizar su perfil, el tema visual y el idioma de la interfaz (español, inglés, francés y portugués).
 
 El sistema está disponible en dos versiones: una aplicación web, usada desde el navegador del computador o del teléfono, y una aplicación móvil para Android y iOS.
 
@@ -97,7 +97,7 @@ Este manual cubre las funcionalidades disponibles para el rol Cliente en la vers
 • Búsqueda de vehículos disponibles y filtros del catálogo.
 • Reserva de vehículos, selección de seguro y aceptación de términos y condiciones.
 • Pago de la reserva por transferencia bancaria y la opción de reservar y pagar después.
-• Consulta, modificación de la sucursal de devolución y cancelación de reservas.
+• Consulta y modificación de la sucursal de devolución de las reservas.
 • Notificaciones, administración del perfil, cambio de correo y contraseña, preferencias de tema e idioma, y cierre de sesión.
 No incluye las funciones del personal administrador (administración de vehículos, mantenimiento, sucursales, tipos de seguro, cuentas bancarias, usuarios, revisión de pagos y reservas, ubicación de la flota e informes), que se documentan en el Manual de Administrador. Tampoco incluye la instalación, la configuración técnica, la base de datos ni el código del sistema, que corresponden al Manual de Instalación y al Manual Técnico.
 
@@ -195,7 +195,7 @@ Tabla 6. Menú en la versión web
 | --- | --- |
 | Home | Página Home: búsqueda de vehículos disponibles y catálogo con filtros. |
 | Notificaciones | Centro de avisos sobre reservas, pagos, cancelaciones y recordatorios. |
-| Reserva | Página Mis reservas: historial, detalle, cambio de sucursal de devolución y cancelación. |
+| Reserva | Página Mis reservas: historial, detalle, y cambio de sucursal de devolución. |
 | Ícono de persona | Página de cuenta: perfil, correo, contraseña, tema, idioma y Cerrar sesión. |
 | Ícono de menú (☰) | En pantallas pequeñas, despliega las opciones anteriores. |
 | Pie de página | Enlaces a Home, Notificaciones y Cuenta, redes sociales y datos de contacto. |
@@ -361,23 +361,20 @@ Tabla 14. Cambio de sucursal de devolución
 ![Figura 22. Edición de la sucursal de devolución en el detalle (web)](images/usuario-figura-22.png)
 
 
-## 7.8 Cancelación de reservas
+## 7.8 Política de cancelación y fecha de devolución
 
-Tabla 15. Cancelación de reservas
+Tabla 15. Política de cancelación y fecha de devolución
 
-| Nombre del módulo | Cancelación de reservas |
+| Nombre del módulo | Política de cancelación y fecha de devolución |
 | --- | --- |
-| Descripción | Permite cancelar una reserva que todavía no ha comenzado. |
+| Descripción | Explica las reglas vigentes: una vez creada la reserva, el cliente no puede cancelarla ni cambiar la fecha de devolución. |
 | Rol autorizado a usarla | Cliente. |
-| Ruta o menú | Web: Reserva > Mis reservas > Cancelar reserva. Aplicación móvil: Reservas > detalle de la reserva > Cancelar reserva. |
-| Pasos en la web | Vaya a Mis reservas. En la reserva que desea cancelar, pulse Cancelar reserva. En la ventana de confirmación ¿Está seguro de que desea cancelar la reserva de...?, pulse Sí, cancelar. Para conservarla, pulse No. |
-| Pasos en la aplicación móvil | Pulse la pestaña Reservas y abra la reserva. Pulse Cancelar reserva. En la ventana ¿Cancelar reserva?, pulse Sí, cancelar. Para conservarla, pulse Conservar reserva. |
-| Captura | Figura 23. Confirmación de cancelación (web) |
-| Resultado esperado | La reserva cambia al estado Cancelada y el vehículo vuelve a estar disponible para esas fechas. En la aplicación móvil aparece el aviso Reserva cancelada: Su reserva fue cancelada exitosamente. |
-| Observaciones o restricciones | Web: el botón Cancelar reserva solo aparece en reservas activas cuando faltan más de 3 días para la fecha de recogida. Aplicación móvil: el botón aparece en reservas en estado Pendiente de pago o Confirmada. Una reserva cancelada no se puede reactivar; si necesita el vehículo, debe crear una nueva reserva. Si ocurre un error, aparece No fue posible cancelar la reserva. |
-
-![Figura 23. Confirmación de cancelación (web)](images/usuario-figura-23.png)
-
+| Ruta o menú | No aplica: ni la web ni la aplicación móvil muestran la opción Cancelar reserva. |
+| Pasos en la web | Antes de pagar, revise con atención las fechas, el vehículo y la sucursal de devolución. Al reservar se aceptan los Términos y condiciones. Si solo necesita cambiar la sucursal de devolución, use la función descrita en la sección 7.7. |
+| Pasos en la aplicación móvil | Los mismos que en la web. |
+| Captura | No aplica. |
+| Resultado esperado | La reserva conserva las fechas elegidas. Si usted elige Reservar y pagar después y no paga dentro de las 24 horas, la reserva se cancela automáticamente. |
+| Observaciones o restricciones | La fecha de devolución es fija y no se puede ampliar ni modificar desde la aplicación. Las condiciones completas están en los Términos y condiciones. Para casos excepcionales, contacte a RentaMovil. |
 
 ## 7.9 Notificaciones
 
@@ -390,13 +387,13 @@ Tabla 16. Notificaciones
 | Ruta o menú | Web: menú Notificaciones. Aplicación móvil: ícono de campana arriba o Menú > Notificaciones. |
 | Pasos en la web | Pulse Notificaciones en la barra de navegación. En la columna izquierda, elija un filtro: Todas (muestra la cantidad de notificaciones no leídas), Reservas confirmadas, Pagos, Cancelaciones o Recordatorios. En la lista Recibidos, revise el mensaje y la fecha de cada notificación. Las no leídas aparecen resaltadas. Pulse una notificación para abrir Detalle de notificación (mensaje, fecha, estado y vehículo). Pulse Cerrar. |
 | Pasos en la aplicación móvil | Pulse el ícono de campana o, en el Menú, la opción Notificaciones. Elija uno de los filtros superiores: Todas, Reservas confirmadas, Pagos, Cancelaciones o Recordatorios. Pulse una notificación para ver su detalle y luego pulse Cerrar. |
-| Captura | Figura 24. Centro de notificaciones (web) / Figura 25. Detalle de notificación (web) |
+| Captura | Figura 23. Centro de notificaciones (web) / Figura 24. Detalle de notificación (web) |
 | Resultado esperado | El sistema muestra las notificaciones del filtro elegido. Al abrir una notificación, queda marcada como leída. |
 | Observaciones o restricciones | Si no hay notificaciones para el filtro elegido, aparece No hay notificaciones para este filtro. El campo Estado en el detalle puede ser Activo, Pago confirmado, Cancelado o Pendiente, según el tipo de aviso. |
 
-![Figura 24. Centro de notificaciones (web)](images/usuario-figura-24.png)
+![Figura 23. Centro de notificaciones (web)](images/usuario-figura-24.png)
 
-![Figura 25. Detalle de notificación (web)](images/usuario-figura-25.png)
+![Figura 24. Detalle de notificación (web)](images/usuario-figura-25.png)
 
 
 ## 7.10 Mi cuenta (perfil)
@@ -410,13 +407,13 @@ Tabla 17. Mi cuenta (perfil)
 | Ruta o menú | Web: ícono de persona en la barra de navegación > página de cuenta. Aplicación móvil: ícono de usuario arriba o Menú > Mi cuenta. |
 | Pasos en la web | Pulse el ícono de persona en la barra de navegación. Revise los datos: Nombre, Apellido, Teléfono, Usuario, Correo y Contraseña (oculta). Para editar, pulse el ícono del lápiz (Editar perfil). Se habilitan los campos editables. Modifique Nombre, Apellido o Teléfono. Para cambiar la foto, pulse Cambiar foto y seleccione una imagen. Pulse Guardar cambios. Para salir sin guardar, pulse la X (Cancelar). |
 | Pasos en la aplicación móvil | Pulse el ícono de usuario o, en el Menú, la opción Mi cuenta. Revise la sección Información personal: Nombre, Teléfono y Correo. Pulse Editar para habilitar los campos, modifique los datos y pulse Guardar. Para cambiar la foto, pulse Cambiar foto y elija una imagen de la galería. |
-| Captura | Figura 26. Página Mi cuenta en modo consulta (web) / Figura 27. Página Mi cuenta en modo edición (web) |
+| Captura | Figura 25. Página Mi cuenta en modo consulta (web) / Figura 26. Página Mi cuenta en modo edición (web) |
 | Resultado esperado | Web: los datos se actualizan y aparece el mensaje Perfil actualizado. |
 | Observaciones o restricciones | El Usuario no se puede modificar. La dirección de correo no se edita en este formulario; se cambia con la opción Cambiar correo. El nombre y el apellido no pueden quedar vacíos. El teléfono se puede vaciar. La foto de perfil debe ser una imagen JPG, PNG, WEBP o GIF de máximo 10 MB. Si no se modifica ningún dato, guardar simplemente sale del modo edición. Aplicación móvil: en la versión actual, los cambios de nombre, teléfono y foto no se guardan en el servidor. Para actualizar los datos de forma permanente, use la versión web. |
 
-![Figura 26. Página Mi cuenta en modo consulta (web)](images/usuario-figura-26.png)
+![Figura 25. Página Mi cuenta en modo consulta (web)](images/usuario-figura-26.png)
 
-![Figura 27. Página Mi cuenta en modo edición (web)](images/usuario-figura-27.png)
+![Figura 26. Página Mi cuenta en modo edición (web)](images/usuario-figura-27.png)
 
 
 ## 7.11 Cambio de dirección de correo
@@ -430,11 +427,11 @@ Tabla 18. Cambio de dirección de correo
 | Ruta o menú | Web: página de cuenta > botón Cambiar correo. |
 | Pasos en la web | Vaya a la página de cuenta. Junto al campo Correo, pulse Cambiar correo. En la ventana Cambiar dirección de correo, verifique el Correo actual. Escriba la Nueva dirección de correo. Escriba la Contraseña actual. Pulse Confirmar cambio. Para salir sin cambios, pulse Cancelar. |
 | Pasos en la aplicación móvil | Esta funcionalidad no está disponible en la aplicación móvil. Debe hacerse desde la versión web. |
-| Captura | Figura 28. Ventana Cambiar dirección de correo (web) |
+| Captura | Figura 27. Ventana Cambiar dirección de correo (web) |
 | Resultado esperado | El correo de la cuenta se actualiza y aparece el mensaje Correo actualizado. A partir de ese momento se debe usar el nuevo correo para iniciar sesión. |
 | Observaciones o restricciones | El nuevo correo debe tener un formato válido, ser diferente del actual y no estar registrado por otro usuario. Si falta algún dato, aparece Escriba el nuevo correo. o Escriba su contraseña actual. Si la contraseña es incorrecta o el correo ya existe, aparece No fue posible actualizar el correo. Revise los datos e intente nuevamente. |
 
-![Figura 28. Ventana Cambiar dirección de correo (web)](images/usuario-figura-28.png)
+![Figura 27. Ventana Cambiar dirección de correo (web)](images/usuario-figura-28.png)
 
 
 ## 7.12 Cambio de contraseña
@@ -448,11 +445,11 @@ Tabla 19. Cambio de contraseña
 | Ruta o menú | Web: página de cuenta > enlace Cambiar contraseña. Aplicación móvil: Mi cuenta > Cambiar contraseña. |
 | Pasos en la web | Vaya a la página de cuenta y pulse Cambiar contraseña. Escriba la Contraseña actual. Escriba la Nueva contraseña y verifique que todos los requisitos de la lista estén marcados. Escriba la contraseña otra vez en Confirmar nueva contraseña. Pulse Guardar cambios. En el mensaje Contraseña cambiada exitosamente, pulse Aceptar. |
 | Pasos en la aplicación móvil | En Mi cuenta, pulse Cambiar contraseña. Escriba la Contraseña actual, la Nueva contraseña y Confirmar nueva contraseña. Pulse Actualizar contraseña. Para salir sin cambios, pulse Cancelar. |
-| Captura | Figura 29. Formulario de cambio de contraseña (web) |
+| Captura | Figura 28. Formulario de cambio de contraseña (web) |
 | Resultado esperado | La contraseña se actualiza. En la web, por seguridad, se cierran todas las sesiones abiertas y el sistema vuelve a la pantalla de inicio de sesión. En la aplicación móvil aparece el aviso Contraseña actualizada. |
 | Observaciones o restricciones | Web: la nueva contraseña debe tener al menos 8 caracteres, un carácter especial, una letra mayúscula y un número. El botón Guardar cambios se habilita solo cuando se cumplen todos los requisitos. Aplicación móvil: la nueva contraseña debe tener al menos 6 caracteres y ser diferente de la actual. La nueva contraseña y su confirmación deben coincidir; de lo contrario aparece Las contraseñas no coinciden. Si la contraseña actual es incorrecta, no se realiza el cambio (Contraseña actual incorrecta). |
 
-![Figura 29. Formulario de cambio de contraseña (web)](images/usuario-figura-29.png)
+![Figura 28. Formulario de cambio de contraseña (web)](images/usuario-figura-29.png)
 
 
 ## 7.13 Preferencias de tema e idioma
@@ -466,12 +463,12 @@ Tabla 20. Preferencias de tema e idioma
 | Ruta o menú | Web: página de cuenta > ícono de luna (Seleccionar un tema) e ícono de globo (Seleccionar un idioma). Aplicación móvil: Mi cuenta > Ajustes. |
 | Pasos en la web | Vaya a la página de cuenta. Para cambiar el tema, pulse el ícono de luna y elija Modo claro, Modo claro neutro, Modo oscuro neutro o Modo azul oscuro. Para cambiar el idioma, pulse el ícono de globo y elija Español, English, Français o Português. |
 | Pasos en la aplicación móvil | En Mi cuenta, pulse Ajustes para desplegar las opciones. En Tema, elija Verde claro, Oscuro, Noche o Azul claro. En el selector de idioma, elija Español, English, Français o Português. |
-| Captura | Figura 30. Ventanas de tema e idioma (web) |
+| Captura | Figura 29. Ventanas de tema e idioma (web) |
 | Resultado esperado | La interfaz cambia de inmediato al tema o idioma seleccionado, y la preferencia queda guardada en el dispositivo para visitas posteriores. |
 | Observaciones o restricciones | La preferencia se guarda en el navegador o teléfono utilizados; en otro dispositivo debe configurarse de nuevo. |
 
-![Figura 30. Ventanas de tema e idioma (web)](images/usuario-figura-30a.png)
-![Figura 30. Ventanas de tema e idioma (web)](images/usuario-figura-30b.png)
+![Figura 29. Ventanas de tema e idioma (web)](images/usuario-figura-30a.png)
+![Figura 29. Ventanas de tema e idioma (web)](images/usuario-figura-30b.png)
 
 
 # 8. Mensajes y validaciones
@@ -506,7 +503,6 @@ Tabla 21. Mensajes y validaciones
 | El comprobante no puede superar los 10 MB. | El archivo pesa demasiado. | Reduzca el tamaño o tome una nueva captura. |
 | ¡Pago enviado! / Pago registrado | El comprobante quedó registrado y la reserva está pendiente de revisión. | Espere la notificación de confirmación. |
 | Ya no puede modificar: quedan 3 días o menos antes de la devolución. | Ya pasó el plazo para cambiar la sucursal de devolución. | Contacte a RentaMovil si el cambio es indispensable. |
-| No fue posible cancelar la reserva. | Ocurrió un error al cancelar. | Intente nuevamente o contacte a RentaMovil. |
 | Perfil actualizado | Se guardaron los cambios del perfil. | Continúe. |
 | Correo actualizado | Se cambió el correo de la cuenta. | Use el nuevo correo para iniciar sesión. |
 | Contraseña cambiada exitosamente | Se actualizó la contraseña. | Inicie sesión con la nueva contraseña. |
@@ -548,7 +544,7 @@ Tabla 22. Preguntas frecuentes
 | ¿Puedo pagar una parte ahora y el resto después? | No. El valor transferido debe ser exactamente el total de la reserva. |
 | ¿Cuándo se confirma mi reserva? | Cuando un administrador valida el comprobante de la transferencia. Recibirá una notificación y la reserva aparecerá como confirmada. |
 | ¿Qué pasa si elijo Reservar y pagar después? | La reserva queda pendiente de pago durante 24 horas. Si no se paga en ese periodo, se cancela automáticamente. |
-| ¿Hasta cuándo puedo cancelar una reserva? | En la web, mientras falten más de 3 días para la fecha de recogida. |
+| ¿Puedo cancelar una reserva o cambiar la fecha de devolución? | No. Una vez creada, la reserva no puede ser cancelada por el cliente y la fecha de devolución es fija; solo se puede cambiar la sucursal de devolución. Una reserva pendiente de pago se cancela automáticamente a las 24 horas. |
 | ¿Puedo cambiar mi nombre de usuario? | No. El nombre de usuario se define en el registro y no se puede modificar. Sí puede cambiar su nombre, apellido, teléfono, foto, correo y contraseña. |
 | ¿Qué documentos debo llevar para recoger el vehículo? | Una licencia de conducción válida, el documento de identidad original y la factura de la reserva. |
 
@@ -595,7 +591,7 @@ Tabla 24. Flujo general de uso
 | 5 | Confirma sucursales, elige el seguro y acepta los términos. | Calcula el total y habilita el paso al pago. |
 | 6 | Transfiere el valor total y adjunta el comprobante. | Registra el pago como en revisión. |
 | 7 | Espera la validación. | El administrador aprueba el pago; la reserva pasa a Confirmada y se envía una notificación. |
-| 8 | Consulta, modifica o cancela la reserva (opcional). | Muestra el historial y aplica los cambios permitidos. |
+| 8 | Consulta la reserva o modifica la sucursal de devolución (opcional). | Muestra el historial y aplica los cambios permitidos. |
 | 9 | Recoge el vehículo en la sucursal con sus documentos. | Comienza el alquiler. |
 | 10 | Devuelve el vehículo en la sucursal acordada. | La reserva pasa a Completada. |
 
@@ -609,7 +605,7 @@ Tabla 25. Estados de las reservas
 | Pago en revisión | El cliente registró el comprobante; un administrador debe validarlo. | activa |
 | Confirmada | El pago fue aprobado; el vehículo está reservado. | activa |
 | Completada | El alquiler terminó y el vehículo fue devuelto. | completada |
-| Cancelada | La reserva fue cancelada por el cliente o por vencerse el plazo de pago. | cancelada |
+| Cancelada | La reserva fue cancelada, por ejemplo, al vencerse el plazo de pago. | cancelada |
 
 ## Anexo C. Requisitos para recoger el vehículo
 

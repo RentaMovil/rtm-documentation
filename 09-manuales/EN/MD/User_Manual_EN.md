@@ -55,7 +55,7 @@ Table of contents
     - 7.5 Reserve and pay later
     - 7.6 Querying my reservations
     - 7.7 Changing the return branch
-    - 7.8 Reservation cancellation
+    - 7.8 Cancellation policy and return date
     - 7.9 Notifications
     - 7.10 My account (profile)
     - 7.11 Email address change
@@ -81,7 +81,7 @@ The document is aimed at anyone who wants to rent a vehicle through RentaMovil, 
 
 RentaMovil is a vehicle rental system that lets customers check the fleet available at a branch for given dates, filter the results, reserve the chosen vehicle with or without insurance, and pay for the reservation by bank transfer attaching the receipt. An administrator validates the payment and confirms the reservation.
 
-The customer can check the status of their reservations at any time, change the return branch or cancel a reservation within the allowed deadlines, receive notifications about their reservations and payments, and customize their profile, the visual theme and the interface language (Spanish, English, French and Portuguese).
+The customer can check the status of their reservations at any time, change the return branch (the return date is fixed and the reservation cannot be cancelled by the customer), receive notifications about their reservations and payments, and customize their profile, the visual theme and the interface language (Spanish, English, French and Portuguese).
 
 The system is available in two versions: a web application, used from the computer or phone browser, and a mobile application for Android and iOS.
 
@@ -97,7 +97,7 @@ This manual covers the features available for the Customer role in the web versi
 • Search for available vehicles and catalog filters.
 • Vehicle reservation, insurance selection and acceptance of terms and conditions.
 • Payment of the reservation by bank transfer and the option to reserve and pay later.
-• Querying, modifying the return branch and cancelling reservations.
+• Querying reservations and modifying their return branch.
 • Notifications, profile management, email and password change, theme and language preferences, and sign out.
 It does not include the administrator staff functions (vehicle management, maintenance, branches, insurance types, bank accounts, users, payment and reservation review, fleet location and reports), which are documented in the Administrator Manual. It also does not include installation, technical configuration, the database or the system code, which correspond to the Installation Manual and the Technical Manual.
 
@@ -195,7 +195,7 @@ Table 6. Menu in the web version
 | --- | --- |
 | Home | Home page: search for available vehicles and catalog with filters. |
 | Notifications | Notice center for reservations, payments, cancellations and reminders. |
-| Reservation | My Reservations page: history, detail, return branch change and cancellation. |
+| Reservation | My Reservations page: history, detail, and return branch change. |
 | Person icon | Account page: profile, email, password, theme, language and Sign out. |
 | Menu icon (☰) | On small screens, it expands the options above. |
 | Footer | Links to Home, Notifications and Account, social networks and contact details. |
@@ -361,23 +361,20 @@ Table 14. Changing the return branch
 ![Figure 22. Editing the return branch in the detail (web)](images/usuario-figure-22.png)
 
 
-## 7.8 Reservation cancellation
+## 7.8 Cancellation policy and return date
 
-Table 15. Reservation cancellation
+Table 15. Cancellation policy and return date
 
-| Module name | Reservation cancellation |
+| Module name | Cancellation policy and return date |
 | --- | --- |
-| Description | Allows the user to cancel a reservation that has not started yet. |
+| Description | Explains the rules in force: once the reservation is created, the customer cannot cancel it or change the return date. |
 | Role allowed to use it | Customer. |
-| Path or menu | Web: Reservation > My Reservas > Cancel Reservation. Mobile app: Reservations > reservation detail > Cancel reservation. |
-| Steps on the web | Go to My Reservations. On the reservation you want to cancel, click Cancel Reservation. In the confirmation window Are you sure you want to cancel the reservation of...?, click Yes, cancel. To keep it, click No. |
-| Steps on the mobile app | Tap the Reservations tab and open the reservation. Tap Cancel reservation. In the Cancel reservation? window, tap Yes, cancel. To keep it, tap Keep reservation. |
-| Screenshot | Figure 23. Cancellation confirmation (web) |
-| Expected result | The reservation changes to Cancelled status and the vehicle becomes available again for those dates. In the mobile app the Reservation cancelled notice appears: Your reservation has been cancelled successfully. |
-| Observations or restrictions | Web: the Cancel Reservation button only appears on active reservations when more than 3 days remain before the pickup date. Mobile app: the button appears on reservations in Pending payment or Confirmed status. A cancelled reservation cannot be reactivated; if the vehicle is needed, a new reservation must be created. If an error occurs, It was not possible to cancel the reservation appears. |
-
-![Figure 23. Cancellation confirmation (web)](images/usuario-figure-23.png)
-
+| Path or menu | Not applicable: neither the web nor the mobile app shows a Cancel reservation option. |
+| Steps on the web | Before paying, check the dates, the vehicle and the return branch carefully. By reserving you accept the Terms and Conditions. If you only need to change the return branch, use the function described in section 7.7. |
+| Steps on the mobile app | The same as on the web. |
+| Screenshot | Not applicable. |
+| Expected result | The reservation keeps the dates you chose. If you choose Reserve and pay later and do not pay within 24 hours, the reservation is cancelled automatically. |
+| Observations or restrictions | The return date is fixed and cannot be extended or modified from the application. The full conditions are in the Terms and Conditions. For exceptional cases, contact RentaMovil. |
 
 ## 7.9 Notifications
 
@@ -390,13 +387,13 @@ Table 16. Notifications
 | Path or menu | Web: Notifications menu. Mobile app: bell icon at the top or Menu > Notifications. |
 | Steps on the web | Click Notifications in the navigation bar. In the left column, choose a filter: All (shows the number of unread notifications), Confirmed Reservations, Payments, Cancellations or Reminders. In the Received list, review the message and date of each notification. Unread ones appear highlighted. Click a notification to open Notification details (message, date, status and vehicle). Click Close. |
 | Steps on the mobile app | Tap the bell icon or, in the Menu, the Notifications option. Choose one of the top filters: All, Confirmed Reservations, Payments, Cancellations or Reminders. Tap a notification to see its detail and then tap Close. |
-| Screenshot | Figure 24. Notification center (web) / Figure 25. Notification detail (web) |
+| Screenshot | Figure 23. Notification center (web) / Figure 24. Notification detail (web) |
 | Expected result | The system shows the notifications for the chosen filter. When you open a notification, it is marked as read. |
 | Observations or restrictions | If there are no notifications for the chosen filter, No notifications for this filter appears. The Status field in the detail can be Active, Payment confirmed, Cancelled or Pending, depending on the notice type. |
 
-![Figure 24. Notification center (web)](images/usuario-figure-24.png)
+![Figure 23. Notification center (web)](images/usuario-figure-24.png)
 
-![Figure 25. Notification detail (web)](images/usuario-figure-25.png)
+![Figure 24. Notification detail (web)](images/usuario-figure-25.png)
 
 
 ## 7.10 My account (profile)
@@ -410,13 +407,13 @@ Table 17. My account (profile)
 | Path or menu | Web: person icon in the navigation bar > account page. Mobile app: user icon at the top or Menu > My account. |
 | Steps on the web | Click the person icon in the navigation bar. Review the details: First name, Last name, Phone, Username, Email and Password (hidden). To edit, click the pencil icon (Edit profile). The editable fields are enabled. Modify First name, Last name or Phone. To change the photo, click Change photo and select an image. Click Save changes. To exit without saving, click the X (Cancel). |
 | Steps on the mobile app | Tap the user icon or, in the Menu, the My account option. Review the Personal information section: First name, Phone and Email. Tap Edit to enable the fields, modify the details and tap Save. To change the photo, tap Change photo and choose an image from the gallery. |
-| Screenshot | Figure 26. My account page in view mode (web) / Figure 27. My account page in edit mode (web) |
+| Screenshot | Figure 25. My account page in view mode (web) / Figure 26. My account page in edit mode (web) |
 | Expected result | Web: the details are updated and the Profile updated message appears. |
 | Observations or restrictions | The Username cannot be modified. The email address is not edited in this form; it is changed with the Change email option. First name and last name cannot be left empty. The phone can be cleared. The profile photo must be a JPG, PNG, WEBP or GIF image of at most 10 MB. If no data is modified, saving simply exits edit mode. Mobile app: in the current version, changes to name, phone and photo are not saved on the server. To update the data permanently, use the web version. |
 
-![Figure 26. My account page in view mode (web)](images/usuario-figure-26.png)
+![Figure 25. My account page in view mode (web)](images/usuario-figure-26.png)
 
-![Figure 27. My account page in edit mode (web)](images/usuario-figure-27.png)
+![Figure 26. My account page in edit mode (web)](images/usuario-figure-27.png)
 
 
 ## 7.11 Email address change
@@ -430,11 +427,11 @@ Table 18. Email address change
 | Path or menu | Web: account page > Change email button. |
 | Steps on the web | Go to the account page. Next to the Email field, click Change email. In the Change email address window, verify the Current email. Type the New email address. Type the Current password. Click Confirm change. To exit without changes, click Cancel. |
 | Steps on the mobile app | This feature is not available in the mobile app. It must be done from the web version. |
-| Screenshot | Figure 28. Change email address window (web) |
+| Screenshot | Figure 27. Change email address window (web) |
 | Expected result | The account email is updated and the Email updated message appears. From that moment on, the new email must be used to sign in. |
 | Observations or restrictions | The new email must have a valid format, be different from the current one and not be registered by another user. If any data is missing, Write the new email. or Write your current password appears. If the password is incorrect or the email already exists, The email could not be updated. Check the details and try again appears. |
 
-![Figure 28. Change email address window (web)](images/usuario-figure-28.png)
+![Figure 27. Change email address window (web)](images/usuario-figure-28.png)
 
 
 ## 7.12 Password change
@@ -448,11 +445,11 @@ Table 19. Password change
 | Path or menu | Web: account page > Change password link. Mobile app: My account > Change password. |
 | Steps on the web | Go to the account page and click Change password. Type the Current password. Type the New password and check that all the requirements in the list are marked. Type the password again in Confirm new password. Click Save changes. In the Password changed successfully message, click Accept. |
 | Steps on the mobile app | In My account, tap Change password. Type the Current password, the New password and Confirm new password. Tap Update password. To exit without changes, tap Cancel. |
-| Screenshot | Figure 29. Password change form (web) |
+| Screenshot | Figure 28. Password change form (web) |
 | Expected result | The password is updated. On the web, for security, all open sessions are closed and the system returns to the sign-in screen. In the mobile app the Password updated notice appears. |
 | Observations or restrictions | Web: the new password must have at least 8 characters, a special character, an uppercase letter and a number. The Save changes button is enabled only when all requirements are met. Mobile app: the new password must have at least 6 characters and be different from the current one. The new password and its confirmation must match; otherwise The passwords do not match appears. If the current password is incorrect, the change is not made (Incorrect current password). |
 
-![Figure 29. Password change form (web)](images/usuario-figure-29.png)
+![Figure 28. Password change form (web)](images/usuario-figure-29.png)
 
 
 ## 7.13 Theme and language preferences
@@ -466,12 +463,12 @@ Table 20. Theme and language preferences
 | Path or menu | Web: account page > moon icon (Select a theme) and globe icon (Select a language). Mobile app: My account > Settings. |
 | Steps on the web | Go to the account page. To change the theme, click the moon icon and choose Light mode, Neutral light mode, Neutral dark mode or Blue dark mode. To change the language, click the globe icon and choose Español, English, Français or Português. |
 | Steps on the mobile app | In My account, tap Settings to expand the options. In Theme, choose Light green, Dark, Night or Light blue. In the language selector, choose Español, English, Français or Português. |
-| Screenshot | Figure 30. Theme and language windows (web) |
+| Screenshot | Figure 29. Theme and language windows (web) |
 | Expected result | The interface changes immediately to the selected theme or language, and the preference is kept on the device for subsequent visits. |
 | Observations or restrictions | The preference is saved in the browser or phone used; on another device it must be configured again. |
 
-![Figure 30. Theme and language windows (web)](images/usuario-figure-30a.png)
-![Figure 30. Theme and language windows (web)](images/usuario-figure-30b.png)
+![Figure 29. Theme and language windows (web)](images/usuario-figure-30a.png)
+![Figure 29. Theme and language windows (web)](images/usuario-figure-30b.png)
 
 
 # 8. Messages and validations
@@ -506,7 +503,6 @@ Table 21. Messages and validations
 | The receipt cannot exceed 10 MB. | The file is too heavy. | Reduce the size or take a new screenshot. |
 | Payment sent! / Payment registered | The receipt was registered and the reservation is pending review. | Wait for the confirmation notification. |
 | You can no longer modify: 3 days or fewer remain before the return. | The deadline to change the return branch has passed. | Contact RentaMovil if the change is essential. |
-| It was not possible to cancel the reservation. | An error occurred while cancelling. | Try again or contact RentaMovil. |
 | Profile updated | The profile changes were saved. | Continue. |
 | Email updated | The account email was changed. | Use the new email to sign in. |
 | Password changed successfully | The password was updated. | Sign in with the new password. |
@@ -548,7 +544,7 @@ Table 22. Frequently asked questions
 | Can I pay part now and the rest later? | No. The transferred amount must be exactly the reservation total. |
 | When does my reservation get confirmed? | When an administrator validates the transfer receipt. You will receive a notification and the reservation will appear as confirmed. |
 | What happens if I choose Reserve and pay later? | The reservation stays pending payment for 24 hours. If it is not paid within that period, it is cancelled automatically. |
-| Until when can I cancel a reservation? | On the web, as long as more than 3 days remain before the pickup date. |
+| Can I cancel a reservation or change the return date? | No. Once created, the reservation cannot be cancelled by the customer and the return date is fixed; only the return branch can be changed. A reservation pending payment is cancelled automatically after 24 hours. |
 | Can I change my username? | No. The username is set at registration and cannot be modified. You can change your first name, last name, phone, photo, email and password. |
 | Which documents do I need to bring to pick up the vehicle? | A valid driving licence, the original identity document and the reservation invoice. |
 
@@ -595,7 +591,7 @@ Table 24. General usage flow
 | 5 | They confirm branches, choose insurance and accept the terms. | It calculates the total and enables the step to payment. |
 | 6 | They transfer the total amount and attach the receipt. | It records the payment as under review. |
 | 7 | They wait for validation. | The administrator approves the payment; the reservation becomes Confirmed and a notification is sent. |
-| 8 | They query, modify or cancel the reservation (optional). | It shows the history and applies the allowed changes. |
+| 8 | They query the reservation or modify the return branch (optional). | It shows the history and applies the allowed changes. |
 | 9 | They pick up the vehicle at the branch with their documents. | The rental begins. |
 | 10 | They return the vehicle at the agreed branch. | The reservation becomes Completed. |
 
@@ -609,7 +605,7 @@ Table 25. Reservation statuses
 | Payment under review | The customer registered the receipt; an administrator must validate it. | active |
 | Confirmed | The payment was approved; the vehicle is reserved. | active |
 | Completed | The rental ended and the vehicle was returned. | completed |
-| Cancelled | The reservation was cancelled by the customer or due to the payment deadline expiring. | cancelled |
+| Cancelled | The reservation was cancelled, for example when the payment deadline expired. | cancelled |
 
 ## Annex C. Requirements to pick up the vehicle
 

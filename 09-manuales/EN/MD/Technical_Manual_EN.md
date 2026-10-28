@@ -66,7 +66,7 @@ Table of contents
     - 10.3 rtm-fleet-maintenance
     - 10.4 rtm-booking-reservation
     - 10.5 Internal use between services (not exposed by the gateway)
-    - 10.6 mock-server.cjs (port 3100, /mock prefix in the frontend)
+    - 10.6 rtm-payment-billing and rtm-telemetry-gps
     - 10.7 Response codes and error format
 - 11. Security
     - 11.1 Permissions by role
@@ -107,7 +107,6 @@ The manual covers:
 • The web frontend (customer and administration) and the mobile app.
 • The API Gateway and the implemented microservices: rtm-iam, rtm-fleet-maintenance and rtm-booking-reservation.
 • The SQL Server database, its schemas, tables, relationships and Liquibase migrations.
-• The mock server that temporarily replaces the payment and GPS services.
 • Security, version control, maintenance, troubleshooting and reference commands.
 It does not cover the detail of each request and response body (that is in the OpenAPI contracts in rtm-docs/07-api/contracts), the planned services that do not exist yet (payment-billing and telemetry-gps) beyond their place in the architecture, nor the full installation procedure.
 
@@ -123,7 +122,7 @@ Table 1. System repositories
 
 | Repository | Location | Contents |
 | --- | --- | --- |
-| RentaMovil | github.com/RentaMovil/RentaMovil (mirror: nicolerv18/RentaMovil) | Web frontend (web/Front-end), mobile app (app_mobile/Frontend), mock server and functional documentation. |
+| RentaMovil | github.com/RentaMovil/RentaMovil (mirror: nicolerv18/RentaMovil) | Web frontend (web/Front-end), mobile app (app_mobile/Frontend), functional documentation. |
 | rtm-api-gateway | github.com/RentaMovil/rtm-api-gateway | Single entry point: routing, JWT verification, CORS, rate limiting and traceability. |
 | rtm-iam | github.com/RentaMovil/rtm-iam | Identity and access: registration, login, JWT, sessions, profile, users and roles. |
 | rtm-iam-db | github.com/RentaMovil/rtm-iam-db | Liquibase migrations for the iam schema and the shared.audit table; SQL Server container. |
@@ -142,7 +141,7 @@ Table 2. Status of each component
 | Component | Status | Note |
 | --- | --- | --- |
 | Web frontend | Operational | Connected to the gateway for auth, users, vehicles, branches, maintenance, reservations, rentals, insurance and notifications. Payments, bank accounts, invoices and GPS tracking also go through the gateway. |
-| Mobile app | Partial | Authentication and notifications point to the old mock (port 3001, /auth/* routes); branches, insurance, reservations and payments use local data. It is not connected to the gateway yet. |
+| Mobile app | Operational | Consumes the API Gateway (EXPO_PUBLIC_API_URL): authentication, branches, vehicles, reservations, payments with receipt and notifications. |
 | rtm-api-gateway | Operational | Routes the five services; the two planned ones respond 503 until they exist. |
 | rtm-iam | Operational | All identity, profile and user administration operations. |
 | rtm-fleet-maintenance | Operational (develop branch) | Vehicles, inventory, availability, branches, maintenance and catalogs. |
@@ -166,7 +165,6 @@ Table 3. Technologies and versions
 | Migrations | Liquibase (Liquibase, n.d.) (Maven plugin, Apache Software Foundation, n.d.) | Liquibase 5.0.4 |
 | Build | Maven (Apache Software Foundation, n.d.) / npm (OpenJS Foundation, n.d.) | Maven 3.9; Node.js 22 (image node:22-alpine) |
 | Containers | Docker (Docker Inc., n.d.) and Docker Compose | Shared external network rentamovil; images eclipse-temurin:21-jre |
-| API mock | json-server + Express middleware | json-server 0.17, jsonwebtoken 9, bcryptjs 3 (mock-server.cjs, port 3100) |
 | Image storage | Cloudinary | Direct upload from the browser (vehicle photos, profile and receipts) |
 | API contracts | OpenAPI 3 (OpenAPI Initiative, 2021) | rtm-docs/07-api/contracts/openapi (one file per service + _shared.yaml) |
 | Version control | Git (Git, n.d.) + GitHub | RentaMovil organization; branches develop → qa → staging → main; Conventional Commits (Conventional Commits, n.d.) |
@@ -189,7 +187,6 @@ Each repository declares its own dependencies in its pom.xml or package.json fil
 - Web frontend (React): React, React Router, react-hook-form, i18next, Leaflet / react-leaflet, Recharts, GSAP, react-dropzone.
 - Mobile app (Expo + React Native): expo-router, Zustand, expo-secure-store, TypeScript.
 - Database and migrations: Microsoft SQL Server, Liquibase.
-- API mock: json-server, jsonwebtoken, bcryptjs (mock-server.cjs).
 
 ## 5.2 System configuration
 
@@ -200,7 +197,7 @@ Table 5. Configuration files and variables per component
 | Microservices (iam, fleet-maintenance, booking-reservation) | application.properties + .env (from .env.example) | See Annex B. Environment variables (DATABASE_*, APP_*_PORT, JWT, etc.) |
 | API Gateway | application.properties + .env (from .env.example) | GATEWAY_PORT, IAM_URL, FLEET_URL, BOOKING_URL, CORS_ALLOWED_ORIGINS, RATE_LIMIT_* |
 | *-db repositories | liquibase.properties (from liquibase.properties.example) | url, username, password, parameter.<service>AppPassword |
-| Web frontend | vite.config.js, .env | VITE_API_URL, VITE_MOCK_API_URL; proxy /api → gateway (port 8080) and /mock → mock-server (port 3100) |
+| Web frontend | vite.config.js, .env | VITE_API_URL; proxy /api → gateway (port 8080) |
 | Mobile app | config/env.ts | EXPO_PUBLIC_API_URL |
 | Containers | docker-compose.yml per repository | Shared external network rentamovil |
 
@@ -236,7 +233,6 @@ Table 6. System ports in local development
 | rtm-booking-reservation | 3003 | Internal |
 | payment-billing (planned) | 3004 | — |
 | telemetry-gps (planned) | 3005 | — |
-| mock-server.cjs | 3100 | Payments, bank accounts and GPS while their services do not exist |
 | SQL Server | 1433 | rentamovil-sqlserver container |
 
 ## 6.4 Layers of each microservice (hexagonal)
@@ -260,7 +256,7 @@ Table 7. Layers of a microservice
 
 ## 6.5 Communication between components
 
-• Client → backend: REST over HTTP with JSON. The browser calls /api (gateway) and /mock (mock) on its own origin; the Vite proxy forwards each to its destination.
+• Client → backend: REST over HTTP with JSON. The browser calls /api (gateway) on its own origin; the Vite proxy forwards it to the gateway.
 • Gateway → services: the gateway routes by path prefix (section 9.1) and adds X-User-Id, X-User-Role and X-Correlation-Id.
 • Service → service: internal REST calls; for example, fleet-maintenance queries booking-reservation for vehicle occupancy in order to calculate availability.
 • Domain events: booking-reservation dispatches them in memory (InProcessEventDispatcher) and fleet publishes them in the log; between services they are delivered via POST /internal/events. No message broker is used at this scale.
@@ -381,9 +377,8 @@ web/Front-end/
 
 │ └── main.jsx providers: Auth, Reservation, Payment
 
-├── mock-server.cjs · db.json API mock (port 3100)
 
-├── vite.config.js /api and /mock proxy
+├── vite.config.js /api proxy
 
 ├── Dockerfile · docker-compose.yml · package.json
 
@@ -400,8 +395,7 @@ Table 10. Web frontend folders
 | src/shared/components | Reusable components: layout (Navbar, Footer), ProtectedRoute (RequireAuth / RequireRole), dialogs. |
 | src/shared/services and hooks | Cross-cutting services (cloudinaryService, useImageUpload, useIsMobile). |
 | src/Traductions | i18next configuration and es, en, fr, pt files. |
-| mock-server.cjs + db.json | API mock for the domains with no real service. |
-| vite.config.js | /api → gateway (:8080) and /mock → mock (:3100) proxy. |
+| vite.config.js | /api → gateway (:8080) proxy. |
 
 ## 7.4 Mobile app (RentaMovil/app_mobile/Frontend)
 
@@ -746,7 +740,7 @@ Between schemas there are only foreign keys to iam.person (reservation holder an
 | Purpose | Customer and administrator interface. |
 | Related files | src/App.jsx (routes), contexts/AuthContext.jsx, shared/api/httpClient.js, shared/components/ProtectedRoute.jsx, features/*/services/*Service.js and *Mapper.js |
 | Related tables | Consumes the APIs; does not access the database |
-| Main operations | Authentication with automatic refresh; role-based routing; consumption of the gateway and the mock; image upload to Cloudinary; internationalization. |
+| Main operations | Authentication with automatic refresh; role-based routing; consumption of the gateway; image upload to Cloudinary; internationalization. |
 
 ### Mobile app
 
@@ -756,15 +750,6 @@ Between schemas there are only foreign keys to iam.person (reservation holder an
 | Related files | src/app/* (routes), src/config/env.ts, src/shared/api/httpClient.ts, src/features/*/services/*.ts |
 | Related tables | Consumes the APIs; does not access the database |
 | Main operations | Login and registration, search, reservation, payment with receipt (camera or gallery), history, notifications and account. Pending connection to the gateway. |
-
-### mock-server.cjs
-
-| Element | Detail |
-| --- | --- |
-| Purpose | Simulated API with json-server for the domains whose service does not exist. |
-| Related files | web/Front-end/mock-server.cjs, web/Front-end/db.json |
-| Related tables | db.json collections: payments, bankAccounts, gps, locations (and old test data) |
-| Main operations | Serve payments, bank accounts and GPS positions until payment-billing and telemetry-gps exist. |
 
 # 10. System API or routes
 
@@ -848,13 +833,20 @@ Note: the web frontend also calls /maintenances and the catalogs (/brands, /cate
 | POST | booking and fleet: /internal/events | Receives domain events (PaymentCompleted, RentalStarted...). | Internal |
 | GET | /health (each service and the gateway) | Service and database status. | Public |
 
-## 10.6 mock-server.cjs (port 3100, /mock prefix in the frontend)
+## 10.6 rtm-payment-billing and rtm-telemetry-gps
 
-| Method | Path | Description | Access / permission |
-| --- | --- | --- | --- |
-| GET/PATCH | /payments, /payments/{id} | Payments and their approval or rejection (replaces payment-billing). | — |
-| GET/POST/PATCH | /bank-accounts | Collection bank accounts. | — |
-| GET | /gps, /locations | GPS devices and positions (replaces telemetry-gps). | — |
+| Method | Route | Description |
+| --- | --- | --- |
+| POST/GET | /payments | Register a payment with receipt and list them. |
+| GET | /payments/{id} | Payment detail. |
+| PATCH | /payments/{id}/approve, /payments/{id}/reject | Manual approval or rejection by an administrator. |
+| GET/POST/PATCH | /bank-accounts, /bank-accounts/{id} | Collection bank accounts. |
+| GET | /invoices/{reservationId}, /invoices/{reservationId}/file | Reservation invoice and its PDF. |
+| GET | /gps | GPS devices. |
+| POST | /locations | Position reporting from the device (device key). |
+| GET | /tracking/{rentalId}/live, /tracking/{rentalId}/history | Current position and history of a rental. |
+| GET | /internal/payments | Internal use between services (X-Internal-Key). |
+| POST | /internal/events | Receives events from other services (X-Internal-Key). |
 
 ## 10.7 Response codes and error format
 
@@ -941,7 +933,6 @@ All repositories use Git and are on GitHub (RentaMovil organization; rtm-docs un
 | Add a use case | 1) Declare the interface in domain/port/in. 2) If it needs something external, declare the port in domain/port/out. 3) Implement it in application/usecase without importing Spring. 4) Implement the adapter in infrastructure. 5) Register the bean in BeanConfig. 6) Expose it in an infrastructure/web controller. 7) Write its tests and run mvn test. |
 | Change the schema | First a new changeset in the *-db repository (never edit one already applied), with its rollback script in 05_rollbacks; apply it with mvn liquibase:update. Then adjust the JPA entity: since ddl-auto=validate, the service will not start if they do not match. |
 | Add an endpoint | Define it first in the OpenAPI contract in rtm-docs/07-api/contracts (API first), respecting plural names, kebab-case, page/limit pagination and the common error format. If it is a new route for the client, add it to the gateway routing table (application.properties). |
-| Connect a mock domain to the real backend | When the service exists, add its prefix to REAL_BACKEND_PREFIXES in web/Front-end/src/shared/api/httpClient.js; the rest of the frontend does not change. |
 | Dependencies | Update versions in pom.xml / package.json on a chore/ branch, run tests and lint (mvn test, npm run lint) and validate on develop before promoting. |
 | Database backup | BACKUP DATABASE rentamovil TO DISK = '/var/opt/mssql/backup/rentamovil_AAAA-MM-DD.bak' from sqlcmd in the rentamovil-sqlserver container; copy the file out of the container and store it off the server. Schedule at least one daily backup and one before each migration. |
 | Restoration | Stop the services, run RESTORE DATABASE rentamovil FROM DISK = '...' WITH REPLACE, verify with each service's GET /health and check that the Liquibase migrations are up to date (mvn liquibase:status). |
@@ -964,7 +955,7 @@ All repositories use Git and are on GitHub (RentaMovil organization; rtm-docs un
 ## 13.2 Technical debt and known limitations
 
 • After a payment is rejected, the follow-up action (re-upload the receipt or cancel) is not complete in the frontend yet.
-• The mobile app still points to the old mock (port 3001 and /auth/* routes that today belong to iam) and uses local data for branches, insurance, reservations and payments.
+• The gateway rate-limit counters and the iam failed-login counter are in memory; with several instances they require Redis. Events between services travel over HTTP with no broker (ADR-012).
 • The gateway rate limiting keeps counters in memory; with several gateways a RateLimiter over Redis must be implemented.
 • iam email sending is a development adapter that writes the code to the log; in production it must be replaced by an email provider.
 • Images are uploaded from the browser to Cloudinary with an unsigned preset; it is better to move it to environment variables or sign it from the backend.
@@ -988,7 +979,6 @@ All repositories use Git and are on GitHub (RentaMovil organization; rtm-docs un
 | Schema | Logical grouping of tables inside the rentamovil database (iam, fleet, booking, shared). |
 | DDL / DML / DCL | Structure, data and permission definition statements respectively. |
 | Domain event | Message announcing that something happened in a service (e.g. RentalStarted) so that others react. |
-| Mock | Simulated server that temporarily replaces a service that does not exist yet. |
 | X-Correlation-Id | Identifier that accompanies a request across all services so it can be traced in the logs. |
 | OpenAPI | Standard specification for describing REST API contracts. |
 
@@ -1040,7 +1030,6 @@ VMware, Inc. (n.d.-c). *Spring Data JPA reference documentation*. https://docs.s
 | Bring up a service with Docker | docker compose up -d --build |
 | Verify a service | curl http://localhost:3001/health (3002, 3003, 8080 depending on the service) |
 | Web frontend in development | cd web/Front-end && npm install && npm run dev |
-| API mock | npm run mock-api |
 | Lint the web frontend | npm run lint |
 | Mobile app | cd app_mobile/Frontend && npm install && npx expo start |
 | Type-check the mobile app | npm run typecheck |
@@ -1054,7 +1043,7 @@ VMware, Inc. (n.d.-c). *Spring Data JPA reference documentation*. https://docs.s
 | rtm-fleet-maintenance | DATABASE_* (fleet_app), APP_FLEET_MAINTENANCE_PORT, IAM_URL, BOOKING_URL, BOOKING_TIMEOUT, RETIRE_RESERVATION_HORIZON_DAYS |
 | rtm-booking-reservation | DATABASE_* (booking_app), APP_BOOKING_RESERVATION_PORT, APP_BOOKING_RESERVATION_JWT_PUBLIC_KEY, APP_BOOKING_RESERVATION_PAYMENT_WINDOW_HOURS (24) |
 | *-db repositories | MSSQL_SA_PASSWORD, MSSQL_PORT, MSSQL_DATABASE (rentamovil); in liquibase.properties: url, username, password and parameter.<service>AppPassword |
-| Web frontend | VITE_API_URL (/api), VITE_MOCK_API_URL (/mock); in Docker: GATEWAY_URL, MOCK_URL |
+| Web frontend | VITE_API_URL (/api); in Docker: GATEWAY_URL |
 | Mobile app | EXPO_PUBLIC_API_URL |
 
 Real values are never published: each .env and liquibase.properties is created from its .example and is not uploaded to the repository.

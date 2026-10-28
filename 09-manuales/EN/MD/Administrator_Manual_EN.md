@@ -266,7 +266,7 @@ Table 9. System roles
 
 | Role | Main permissions | Restrictions |
 | --- | --- | --- |
-| Customer | Search vehicles, make reservations, pay by transfer, query and cancel their reservations, receive notifications and manage their account. | Does not access the Administration Panel. Only sees their own reservations and notifications. |
+| Customer | Search vehicles, make reservations, pay by transfer, query their reservations and change the return branch, receive notifications and manage their account. | Does not access the Administration Panel. Only sees their own reservations and notifications. |
 | Administrator | Manage vehicles, maintenance, branches and insurance types; review reservations and validate payments; record pickups and returns; query fleet location and reports. | Does not manage users, roles or bank accounts, unless those permissions are assigned. |
 | Super Admin | Everything the Administrator can do, plus user and role management and administration of the collection bank accounts. | It must be an individual, secure account assigned to very few people. |
 
@@ -732,7 +732,7 @@ Table 32. Reservation statuses
 | Confirmed | Payment approved; vehicle reserved. | Record the pickup when the customer collects the vehicle. |
 | In progress | Vehicle delivered; active rental. | Track the vehicle on the map and record the return. |
 | Completed | Vehicle returned. | None. |
-| Cancelled | Reservation cancelled by the customer, by payment rejection or by payment deadline expiry. | None. |
+| Cancelled | Reservation cancelled by payment rejection or by payment deadline expiry. | None. |
 
 ## Annex C. Maintenance statuses
 

@@ -265,7 +265,7 @@ Tabla 9. Roles del sistema
 
 | Rol | Permisos principales | Restricciones |
 | --- | --- | --- |
-| Cliente | Buscar vehículos, hacer reservas, pagar por transferencia, consultar y cancelar sus reservas, recibir notificaciones y administrar su cuenta. | No accede al Panel de Administración. Solo ve sus propias reservas y notificaciones. |
+| Cliente | Buscar vehículos, hacer reservas, pagar por transferencia, consultar sus reservas y cambiar la sucursal de devolución, recibir notificaciones y administrar su cuenta. | No accede al Panel de Administración. Solo ve sus propias reservas y notificaciones. |
 | Administrador | Administrar vehículos, mantenimiento, sucursales y tipos de seguro; revisar reservas y validar pagos; registrar recogidas y devoluciones; consultar la ubicación de la flota e informes. | No administra usuarios, roles ni cuentas bancarias, salvo que se le asignen esos permisos. |
 | Super Admin | Todo lo que puede hacer el Administrador, más la gestión de usuarios y roles y la administración de las cuentas bancarias de recaudo. | Debe ser una cuenta individual y segura, asignada a muy pocas personas. |
 
@@ -730,7 +730,7 @@ Tabla 32. Estados de las reservas
 | Confirmada | Pago aprobado; vehículo reservado. | Registre la recogida cuando el cliente recoja el vehículo. |
 | En progreso | Vehículo entregado; alquiler activo. | Monitoree el vehículo en el mapa y registre la devolución. |
 | Completada | Vehículo devuelto. | Ninguna. |
-| Cancelada | Reserva cancelada por el cliente, por rechazo del pago o por vencimiento del plazo de pago. | Ninguna. |
+| Cancelada | Reserva cancelada por rechazo del pago o por vencimiento del plazo de pago. | Ninguna. |
 
 ## Anexo C. Estados del mantenimiento
 
