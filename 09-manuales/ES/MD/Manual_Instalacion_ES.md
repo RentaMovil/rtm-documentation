@@ -30,6 +30,7 @@ Control de versiones
 | --- | --- | --- | --- |
 | 1.0 | 09/07/2026 | Creación inicial del manual de instalación. | Equipo de desarrollo |
 | 2.0 | 07/10/2026 | Actualización para coincidir con la arquitectura actual: SQL Server en Docker, migraciones Liquibase por esquema, claves JWT RS256, los microservicios iam, fleet-maintenance y booking-reservation, API Gateway, frontend web con mock de API, aplicación móvil, primer Super Admin, verificación y errores comunes. | Equipo de desarrollo |
+| 2.1 | 27/10/2026 | Se incorporan payment-billing y telemetry-gps (esquemas, servicios y orden de migración), se elimina el mock de API y la aplicación móvil pasa a consumir el API Gateway. | Equipo de desarrollo |
 
 Tabla de contenido
 
@@ -76,7 +77,7 @@ Tabla de contenido
 
 Este manual explica cómo preparar una máquina, obtener el código, configurar y arrancar todos los componentes de RentaMovil en un entorno local de desarrollo o pruebas, y cómo verificar que la instalación es correcta.
 
-RentaMovil está compuesto por varios repositorios que se instalan por separado y se comunican a través de una red de Docker llamada rentamovil: una base de datos SQL Server (Microsoft, s. f.), tres repositorios de migraciones, tres microservicios Java, un API Gateway, el frontend web con su mock de API y la aplicación móvil. Por eso el orden de instalación importa, y se indica en cada paso.
+RentaMovil está compuesto por varios repositorios que se instalan por separado y se comunican a través de una red de Docker llamada rentamovil: una base de datos SQL Server (Microsoft, s. f.), cinco repositorios de migraciones (iam, fleet, telemetry, booking y payment), cinco microservicios Java (iam, fleet-maintenance, booking-reservation, payment-billing y telemetry-gps), un API Gateway, el frontend web y la aplicación móvil. Por eso el orden de instalación importa, y se indica en cada paso.
 
 ## 1.1 Convenciones
 
@@ -118,7 +119,7 @@ Tabla 2. Software necesario
 | Docker Desktop (Docker Inc., s. f.) (o Docker Engine) | 24.0 o posterior, con Docker Compose 2.20+ | SQL Server, migraciones y los contenedores de los servicios. | docker --version / docker compose version |
 | Java JDK (Oracle Corporation, s. f.) | 21 (se recomienda Eclipse Temurin) | Compilar y ejecutar los microservicios fuera de Docker. | java -version |
 | Apache Maven (Apache Software Foundation, s. f.) | 3.9 o posterior | Dependencias, pruebas, ejecución y migraciones Liquibase (Liquibase, s. f.). | mvn -version |
-| Node.js (OpenJS Foundation, s. f.) + npm | Node 22 LTS y npm 10 o posterior | Frontend web, mock de API y aplicación móvil. | node -v / npm -v |
+| Node.js (OpenJS Foundation, s. f.) + npm | Node 22 LTS y npm 10 o posterior | Frontend web y aplicación móvil. | node -v / npm -v |
 | OpenSSL (OpenSSL Software Foundation, s. f.) | Incluido en Git Bash, Linux y macOS | Generar el par de claves JWT RS256. | openssl version |
 | Editor de código | Visual Studio Code o IntelliJ IDEA | Editar los archivos .env y revisar el código. | — |
 | Cliente de base de datos (opcional) | SQL Server Management Studio o Azure Data Studio | Consultar la base de datos y crear el primer Super Admin. | — |
@@ -193,8 +194,8 @@ Tabla 4. Comandos de instalación de dependencias
 | Componente | Carpeta | Comando |
 | --- | --- | --- |
 | Repositorios de base de datos | rtm-*-db | mvn -q dependency:resolve (opcional; Liquibase lo hace al ejecutar) |
-| Microservicios y gateway | rtm-iam, rtm-fleet-maintenance, rtm-booking-reservation, rtm-api-gateway | mvn install -DskipTests |
-| Frontend web y mock de API | RentaMovil/web/Front-end | npm install |
+| Microservicios y gateway | rtm-iam, rtm-fleet-maintenance, rtm-booking-reservation, rtm-payment-billing, rtm-telemetry-gps, rtm-api-gateway | mvn install -DskipTests |
+| Frontend web | RentaMovil/web/Front-end | npm install |
 | Aplicación móvil | RentaMovil/app_mobile/Frontend | npm install |
 
 La primera descarga de Maven y npm puede tardar varios minutos; las siguientes usan la caché.
@@ -205,16 +206,19 @@ Cada repositorio incluye archivos de ejemplo (.env.example y, en los repositorio
 
 ## 7.1 Contraseñas que deben coincidir
 
-Defina primero estas cuatro contraseñas y úselas de forma consistente. Deben cumplir la política de SQL Server: 8 o más caracteres con mayúscula, minúscula, número y símbolo.
+Defina primero estas contraseñas y úselas de forma consistente. Deben cumplir la política de SQL Server: 8 o más caracteres con mayúscula, minúscula, número y símbolo.
 
 Tabla 5. Contraseñas compartidas entre repositorios
 
 | Contraseña | Dónde se escribe |
 | --- | --- |
-| Administrador de SQL Server (sa) | MSSQL_SA_PASSWORD en el .env de rtm-iam-db, rtm-fleet-maintenance-db y rtm-booking-db; password en cada liquibase.properties. |
+| Administrador de SQL Server (sa) | MSSQL_SA_PASSWORD en el .env de rtm-iam-db, rtm-fleet-maintenance-db, rtm-telemetry-gps-db, rtm-booking-db y rtm-payment-billing-db; password en cada liquibase.properties. |
 | Usuario iam_app | IAM_APP_PASSWORD en rtm-iam-db/.env; parameter.iamAppPassword en rtm-iam-db/liquibase.properties; DATABASE_PASSWORD en rtm-iam/.env. |
 | Usuario fleet_app | FLEET_APP_PASSWORD en rtm-fleet-maintenance-db/.env; parameter.fleetAppPassword en su liquibase.properties; DATABASE_PASSWORD en rtm-fleet-maintenance/.env. |
 | Usuario booking_app | BOOKING_APP_PASSWORD en rtm-booking-db/.env; parameter.bookingAppPassword en su liquibase.properties; DATABASE_PASSWORD en rtm-booking-reservation/.env. |
+| Usuario telemetry_app | TELEMETRY_APP_PASSWORD en rtm-telemetry-gps-db/.env; parameter.telemetryAppPassword en su liquibase.properties; DATABASE_PASSWORD en rtm-telemetry-gps/.env. |
+| Usuario payment_app | parameter.paymentAppPassword en rtm-payment-billing-db/liquibase.properties (y la variable de contraseña de su .env.example); DATABASE_PASSWORD en rtm-payment-billing/.env. |
+| Clave interna entre servicios | APP_INTERNAL_API_KEY: el MISMO valor en rtm-booking-reservation, rtm-fleet-maintenance, rtm-payment-billing y rtm-telemetry-gps (header X-Internal-Key). |
 
 ## 7.2 Repositorios de base de datos
 
@@ -224,7 +228,7 @@ cp .env.example .env
 
 cp liquibase.properties.example liquibase.properties
 
-# repetir en rtm-fleet-maintenance-db y rtm-booking-db
+# repetir en rtm-fleet-maintenance-db, rtm-telemetry-gps-db, rtm-booking-db y rtm-payment-billing-db
 
 # rtm-iam-db/.env
 
@@ -260,21 +264,23 @@ sed '/-----/d' pub.pem | tr -d '\r\n' # valor de APP_IAM_JWT_PUBLIC_KEY
 
 rm priv.pem pub.pem # no dejar las claves en el disco
 
-Cada valor se copia en una sola línea, sin las líneas BEGIN/END. La clave pública se usa en rtm-iam (APP_IAM_JWT_PUBLIC_KEY) y en rtm-booking-reservation (APP_BOOKING_RESERVATION_JWT_PUBLIC_KEY). iam no arranca si faltan las claves, si son menores de 2048 bits o si no forman un par.
+Cada valor se copia en una sola línea, sin las líneas BEGIN/END. La clave pública se usa en rtm-iam (APP_IAM_JWT_PUBLIC_KEY) en rtm-booking-reservation (APP_BOOKING_RESERVATION_JWT_PUBLIC_KEY) y en rtm-telemetry-gps (APP_TELEMETRY_GPS_JWT_PUBLIC_KEY); fleet-maintenance y payment-billing la descargan del endpoint GET /jwks de iam a través de IAM_URL. iam no arranca si faltan las claves, si son menores de 2048 bits o si no forman un par.
 
 ## 7.4 Microservicios y gateway
 
 cd rtm-iam && cp .env.example .env
 
-# repetir en rtm-fleet-maintenance, rtm-booking-reservation y rtm-api-gateway
+# repetir en rtm-fleet-maintenance, rtm-booking-reservation, rtm-payment-billing, rtm-telemetry-gps y rtm-api-gateway
 
 Tabla 6. Variables principales por servicio
 
 | Archivo | Variables a completar | Valor local |
 | --- | --- | --- |
 | rtm-iam/.env | DATABASE_URL, DATABASE_USERNAME, DATABASE_PASSWORD, APP_IAM_PORT, APP_IAM_JWT_PRIVATE_KEY, APP_IAM_JWT_PUBLIC_KEY, APP_IAM_JWT_EXPIRY, APP_IAM_REFRESH_TOKEN_EXPIRY, APP_IAM_BCRYPT_ROUNDS | usuario iam_app; puerto 3001; claves del paso 7.3; 1800, 604800 y 12 por defecto. |
-| rtm-fleet-maintenance/.env | DATABASE_URL, DATABASE_USERNAME, DATABASE_PASSWORD, APP_FLEET_MAINTENANCE_PORT, IAM_URL, BOOKING_URL, BOOKING_TIMEOUT | usuario fleet_app; puerto 3002; http://localhost:3001 y http://localhost:3003. |
-| rtm-booking-reservation/.env | DATABASE_URL, DATABASE_USERNAME, DATABASE_PASSWORD, APP_BOOKING_RESERVATION_PORT, APP_BOOKING_RESERVATION_JWT_PUBLIC_KEY, APP_BOOKING_RESERVATION_PAYMENT_WINDOW_HOURS | usuario booking_app; puerto 3003; clave pública de iam; 24 horas. |
+| rtm-fleet-maintenance/.env | DATABASE_URL, DATABASE_USERNAME, DATABASE_PASSWORD, APP_FLEET_MAINTENANCE_PORT, IAM_URL, BOOKING_URL, BOOKING_TIMEOUT, RETIRE_RESERVATION_HORIZON_DAYS, APP_INTERNAL_API_KEY | usuario fleet_app; puerto 3002; http://localhost:3001 y http://localhost:3003. |
+| rtm-booking-reservation/.env | DATABASE_URL, DATABASE_USERNAME, DATABASE_PASSWORD, APP_BOOKING_RESERVATION_PORT, APP_BOOKING_RESERVATION_JWT_PUBLIC_KEY, IAM_URL, FLEET_URL, TELEMETRY_URL, APP_BOOKING_RESERVATION_PAYMENT_WINDOW_HOURS, APP_INTERNAL_API_KEY | usuario booking_app; puerto 3003; URLs de iam, fleet y telemetry; 24 horas. |
+| rtm-payment-billing/.env | DATABASE_URL, DATABASE_USERNAME, DATABASE_PASSWORD, APP_PAYMENT_BILLING_PORT, IAM_URL, BOOKING_URL, APP_PAYMENT_BILLING_FILE_ALLOWED_PREFIX, APP_PAYMENT_BILLING_INVOICE_STORAGE_DIR, APP_INTERNAL_API_KEY | usuario payment_app; puerto 3004; carpeta local de facturas (./invoices-storage). |
+| rtm-telemetry-gps/.env | DATABASE_URL, DATABASE_USERNAME, DATABASE_PASSWORD, APP_TELEMETRY_GPS_PORT, APP_TELEMETRY_GPS_JWT_PUBLIC_KEY, APP_TELEMETRY_GPS_DEVICE_API_KEY, BOOKING_URL, APP_INTERNAL_API_KEY | usuario telemetry_app; puerto 3005; clave pública de iam; una clave para los dispositivos GPS de prueba. |
 | rtm-api-gateway/.env | GATEWAY_PORT, IAM_URL, FLEET_URL, BOOKING_URL, PAYMENT_URL, TELEMETRY_URL, CORS_ALLOWED_ORIGINS, RATE_LIMIT_* | Puerto 8080; los valores de .env.example sirven para local. |
 
 La URL local de la base de datos es jdbc:sqlserver://localhost:1433;databaseName=rentamovil;encrypt=true;trustServerCertificate=true. Dentro de Docker, cada docker-compose.yml la cambia automáticamente para usar el nombre del contenedor (sqlserver).
@@ -285,7 +291,6 @@ El archivo RentaMovil/web/Front-end/.env ya contiene los valores locales y no ti
 
 VITE_API_URL=/api # proxy de Vite hacia el gateway (localhost:8080)
 
-VITE_MOCK_API_URL=/mock # proxy de Vite hacia el mock (localhost:3100)
 
 VITE_CLOUDINARY_CLOUD_NAME=<nombre del cloud de Cloudinary>
 
@@ -323,7 +328,15 @@ docker compose up --build
 
 El contenedor de migraciones termina en Exited (0). Alternativa sin Docker: mvn liquibase:update.
 
-### 8.4 Esquema booking
+### 8.4 Esquema telemetry
+
+cd ../rtm-telemetry-gps-db
+
+docker compose up --build
+
+Debe correr antes que booking, porque booking.rental.gps_id apunta a telemetry.gps. Alternativa sin Docker: mvn liquibase:update.
+
+### 8.5 Esquema booking
 
 cd ../rtm-booking-db
 
@@ -331,7 +344,15 @@ docker compose up --build
 
 Alternativa sin Docker: mvn liquibase:update.
 
-### 8.5 Verificar las migraciones
+### 8.6 Esquema payment
+
+cd ../rtm-payment-billing-db
+
+docker compose up --build
+
+Debe correr al final: sus claves foráneas apuntan a booking.reservation e iam.[user]. Alternativa sin Docker: mvn liquibase:update.
+
+### 8.7 Verificar las migraciones
 
 Desde cada repositorio de base de datos:
 
@@ -339,11 +360,11 @@ mvn liquibase:status # debe indicar que no hay changesets pendientes
 
 Cuando se usan parámetros, el plugin de Maven puede imprimir un NoSuchFieldException sobre parameter.*AppPassword. Es inofensivo; lo importante es el BUILD SUCCESS final.
 
-Cada esquema guarda su historial en su propia tabla: dbo.DATABASECHANGELOG_IAM, dbo.DATABASECHANGELOG_FLEET y dbo.DATABASECHANGELOG_BOOKING.
+Cada esquema guarda su historial en su propia tabla: dbo.DATABASECHANGELOG_IAM, dbo.DATABASECHANGELOG_FLEET, dbo.DATABASECHANGELOG_TELEMETRY, dbo.DATABASECHANGELOG_BOOKING y dbo.DATABASECHANGELOG_PAYMENT.
 
 # 9. Ejecución del backend
 
-Arranque los servicios en este orden: rtm-iam → rtm-fleet-maintenance → rtm-booking-reservation → rtm-api-gateway. Puede hacerlo con Docker (recomendado) o directamente con Maven; no use los dos métodos a la vez para el mismo servicio, porque usan el mismo puerto.
+Arranque los servicios en este orden: rtm-iam → rtm-fleet-maintenance → rtm-booking-reservation → rtm-payment-billing → rtm-telemetry-gps → rtm-api-gateway. Puede hacerlo con Docker (recomendado) o directamente con Maven; no use los dos métodos a la vez para el mismo servicio, porque usan el mismo puerto.
 
 ## 9.1 Con Docker
 
@@ -353,9 +374,13 @@ cd ../rtm-fleet-maintenance && docker compose up -d --build
 
 cd ../rtm-booking-reservation && docker compose up -d --build
 
+cd ../rtm-payment-billing && docker compose up -d --build
+
+cd ../rtm-telemetry-gps && docker compose up -d --build
+
 cd ../rtm-api-gateway && docker compose up -d --build
 
-docker ps # rentamovil-iam, -fleet-maintenance, -booking-reservation, -api-gateway: Up
+docker ps # rentamovil-iam, -fleet-maintenance, -booking-reservation, -payment-billing, -telemetry-gps, -api-gateway: Up
 
 La primera construcción tarda varios minutos porque descarga las dependencias dentro de la imagen; las siguientes son rápidas.
 
@@ -372,21 +397,19 @@ Tabla 7. Servicios del backend
 | rtm-iam | 3001 | rentamovil-iam | curl http://localhost:3001/health |
 | rtm-fleet-maintenance | 3002 | rentamovil-fleet-maintenance | curl http://localhost:3002/health |
 | rtm-booking-reservation | 3003 | rentamovil-booking-reservation | curl http://localhost:3003/health |
+| rtm-payment-billing | 3004 | rentamovil-payment-billing | curl http://localhost:3004/health |
+| rtm-telemetry-gps | 3005 | rentamovil-telemetry-gps | curl http://localhost:3005/health |
 | rtm-api-gateway | 8080 | rentamovil-api-gateway | curl http://localhost:8080/health |
 
-Cada servicio responde {"status":"ok","db":"connected",...}. El gateway responde con el estado de cada servicio; payment-billing y telemetry-gps aparecen como down porque todavía no existen, y eso es normal.
+Cada servicio responde {"status":"ok","db":"connected",...}. El gateway responde con el estado de cada servicio (ok, degraded o down).
 
 # 10. Ejecución del frontend
 
 ## 10.1 Frontend web en modo desarrollo
 
-Abra dos terminales en RentaMovil/web/Front-end:
+Abra una terminal en RentaMovil/web/Front-end:
 
-# Terminal 1: mock de API (pagos, cuentas bancarias y GPS) en el puerto 3100
-
-npm run mock-api
-
-# Terminal 2: aplicación web en el puerto 5173
+# Aplicación web en el puerto 5173
 
 npm run dev
 
@@ -396,7 +419,7 @@ Con el backend ya levantado en la red rentamovil:
 
 cd RentaMovil/web/Front-end
 
-docker compose up -d --build # web en http://localhost:4173 y el mock en la red
+docker compose up -d --build # web en http://localhost:4173
 
 ## 10.3 Aplicación móvil
 
@@ -406,7 +429,7 @@ npx expo start
 
 Escanee el código QR con Expo Go (Android) o con la cámara (iOS), o pulse a para el emulador de Android y w para la versión web.
 
-Limitación actual: la aplicación móvil todavía no está conectada al API Gateway. Usa el mock antiguo y datos locales, por lo que iniciar sesión contra el nuevo backend no funciona desde la app (ver sección 15).
+La aplicación móvil consume el API Gateway: debe estar levantado antes de iniciar sesión. En el emulador o la versión web basta con el valor por defecto (http://localhost:8080); en un teléfono físico defina EXPO_PUBLIC_API_URL con la IP de su máquina (por ejemplo, http://192.168.1.50:8080).
 
 # 11. Acceso al sistema
 
@@ -417,7 +440,6 @@ Tabla 8. Direcciones de acceso
 | Aplicación web (desarrollo) | http://localhost:5173 | Pantalla de inicio de sesión. |
 | Aplicación web (Docker) | http://localhost:4173 | La misma aplicación servida por el contenedor rentamovil-web. |
 | API Gateway | http://localhost:8080 | Punto de entrada de la API; /health muestra el estado de los servicios. |
-| Mock de API | http://localhost:3100 | Pagos, cuentas bancarias y GPS. |
 | SQL Server | localhost,1433 | usuario sa con la contraseña definida en el paso 7.1 (solo para administración de la base de datos). |
 
 # 12. Usuario de prueba
@@ -469,7 +491,7 @@ Tabla 9. Lista de verificación
 | Datos en la base de datos | Busque vehículos por sucursal y fechas | La búsqueda responde (con vehículos si el administrador ya registró alguno). |
 | Administración | Inicie sesión con el Super Admin (12.2) | Administración aparece en la barra y el panel muestra todas las secciones. |
 | Persistencia | Registre una sucursal o un vehículo y recargue la página | El registro sigue apareciendo. |
-| Mock | Abra Administración > Cuentas bancarias | Se muestran las cuentas del mock. |
+| Pagos | Abra Administración > Cuentas bancarias | Se carga la lista de cuentas de recaudo desde payment-billing (vacía si todavía no se registró ninguna). |
 
 # 14. Errores comunes y soluciones
 
@@ -479,26 +501,26 @@ Tabla 10. Errores frecuentes
 | --- | --- | --- |
 | network rentamovil declared as external, but could not be found | No se creó la red compartida. | docker network create rentamovil y repita el comando. |
 | rentamovil-sqlserver se detiene al arrancar | La contraseña de sa no cumple la política de SQL Server o la memoria es insuficiente. | Use 8+ caracteres con mayúscula, minúscula, número y símbolo; asigne al menos 2 GB de RAM a Docker. |
-| Port is already allocated (1433, 3001, 3002, 3003, 8080, 5173 o 3100) | Otro proceso, o el mismo servicio ejecutado con Maven y con Docker al mismo tiempo. | Detenga el proceso duplicado (netstat -ano \| findstr :PUERTO en Windows) o cambie el puerto en el .env. |
-| Missing parameter.iamAppPassword (o fleet / booking) | Falta la contraseña del usuario del servicio en liquibase.properties o en el .env. | Complete el parámetro y ejecute las migraciones otra vez. |
-| Las migraciones de fleet o booking fallan por objetos de iam | Se ejecutaron antes que rtm-iam-db. | Respete el orden: iam-db → fleet-db → booking-db. |
+| Port is already allocated (1433, 3001, 3002, 3003, 3004, 3005, 8080, 5173 o 4173) | Otro proceso, o el mismo servicio ejecutado con Maven y con Docker al mismo tiempo. | Detenga el proceso duplicado (netstat -ano \| findstr :PUERTO en Windows) o cambie el puerto en el .env. |
+| Missing parameter.iamAppPassword (o fleet / telemetry / booking / payment) | Falta la contraseña del usuario del servicio en liquibase.properties o en el .env. | Complete el parámetro y ejecute las migraciones otra vez. |
+| Las migraciones de fleet o booking fallan por objetos de iam | Se ejecutaron antes que rtm-iam-db. | Respete el orden: iam-db → fleet-db → telemetry-db → booking-db → payment-db. |
 | Un servicio no arranca: error de validación de esquema (Hibernate) | Faltan migraciones, o el código y el esquema vienen de ramas distintas. | Ejecute mvn liquibase:update y use las ramas de la sección 5.1. |
 | Login failed for user 'iam_app' (o fleet_app / booking_app) | DATABASE_PASSWORD no coincide con el parámetro usado en la migración. | Haga coincidir las contraseñas según la tabla 7.1. |
 | iam no arranca: JWT keys inválidas | Claves vacías, con saltos de línea, con las líneas BEGIN/END, o que no forman un par. | Regenérelas con el paso 7.3 y péguelas en una sola línea. |
 | 401 INVALID_TOKEN en todas las peticiones de booking | APP_BOOKING_RESERVATION_JWT_PUBLIC_KEY no es la clave pública de iam. | Copie el mismo APP_IAM_JWT_PUBLIC_KEY. |
 | El gateway responde 503 SERVICE_UNAVAILABLE | El servicio de destino no está levantado. | Levántelo y revise el /health del gateway. |
 | Crear una reserva responde 409 FLEET_SERVICE_UNAVAILABLE | Limitación conocida de booking-reservation (adaptador de flota provisional). | Comportamiento esperado en esta versión. |
-| Pantalla en blanco o errores de red en la web | El gateway o el mock están caídos, o se modificó el .env del frontend. | Revise la consola del navegador (F12), levante el gateway y ejecute npm run mock-api. |
+| Pantalla en blanco o errores de red en la web | El gateway está caído, o se modificó el .env del frontend. | Revise la consola del navegador (F12) y levante el gateway. |
 | El código de recuperación de contraseña no llega | En desarrollo iam no envía correos: escribe el código en su log. | docker logs rentamovil-iam y busque [EMAIL DE DESARROLLO]. |
 | 429 al iniciar sesión | Límite de 10 intentos cada 5 minutos por IP. | Espere o ajuste RATE_LIMIT_* en el .env del gateway. |
 | java, mvn o npm no se reconocen | La herramienta no está instalada o no está en el PATH. | Instálela y abra una terminal nueva. |
 
 # 15. Limitaciones conocidas de la versión instalada
 
-• Crear reservas responde 409 hasta que booking-reservation se conecte con fleet-maintenance.
-• Los servicios payment-billing y telemetry-gps no existen: los pagos, las cuentas bancarias y el GPS se sirven desde el mock (puerto 3100).
-• La aplicación móvil no está conectada al API Gateway.
-• El gateway todavía no enruta /maintenances ni los catálogos de referencia que usa la aplicación web; hasta que se agreguen, esas pantallas de administración no cargan datos a través del gateway.
+• Los eventos entre servicios viajan por HTTP sin broker ni outbox: si un servicio destino está caído, el evento se pierde y solo queda en el log (ADR-012).
+• Los contadores del límite de peticiones del gateway y de intentos de inicio de sesión de iam están en memoria: con varias instancias requieren Redis.
+• El pago es una transferencia bancaria con revisión manual de un administrador; no hay pasarela de pago (ADR-013).
+• Las facturas se guardan en una carpeta local del servicio payment-billing (invoices-storage); en producción conviene un almacenamiento persistente.
 • El envío de correos de iam es de calidad de desarrollo (escribe en el log).
 
 # 16. Glosario
@@ -516,7 +538,6 @@ Tabla 10. Errores frecuentes
 | Archivo .env | Archivo local con la configuración y los secretos de un componente; no se sube al repositorio. |
 | JWT / RS256 | Token de sesión firmado con un par de claves RSA. |
 | API Gateway | Servicio que recibe todas las peticiones y las reenvía al microservicio correcto. |
-| Mock de API | Servidor simulado para las funciones cuyo servicio real todavía no existe. |
 | Health check | Endpoint /health que indica si un servicio y su base de datos funcionan. |
 | Maven / npm | Gestores de dependencias y compilación para Java y JavaScript. |
 | Expo Go | App de teléfono usada para ejecutar la aplicación móvil en desarrollo. |
@@ -550,14 +571,18 @@ Oracle Corporation. (s. f.). *Java SE documentation*. https://docs.oracle.com/en
 | 1 | Crear la red | docker network create rentamovil |
 | 2 | SQL Server + esquema iam | cd rtm-iam-db && docker compose up -d |
 | 3 | Esquema fleet | cd rtm-fleet-maintenance-db && docker compose up --build |
-| 4 | Esquema booking | cd rtm-booking-db && docker compose up --build |
-| 5 | Claves JWT y archivos .env | openssl genpkey ... / cp .env.example .env |
-| 6 | Servicio iam | cd rtm-iam && docker compose up -d --build |
-| 7 | Servicio fleet-maintenance | cd rtm-fleet-maintenance && docker compose up -d --build |
-| 8 | Servicio booking-reservation | cd rtm-booking-reservation && docker compose up -d --build |
-| 9 | API Gateway | cd rtm-api-gateway && docker compose up -d --build |
-| 10 | Mock de API y web | npm run mock-api y npm run dev |
-| 11 | Primer Super Admin | UPDATE iam.[user] ... (sección 12.2) |
+| 4 | Esquema telemetry | cd rtm-telemetry-gps-db && docker compose up --build |
+| 5 | Esquema booking | cd rtm-booking-db && docker compose up --build |
+| 6 | Esquema payment | cd rtm-payment-billing-db && docker compose up --build |
+| 7 | Claves JWT y archivos .env | openssl genpkey ... / cp .env.example .env |
+| 8 | Servicio iam | cd rtm-iam && docker compose up -d --build |
+| 9 | Servicio fleet-maintenance | cd rtm-fleet-maintenance && docker compose up -d --build |
+| 10 | Servicio booking-reservation | cd rtm-booking-reservation && docker compose up -d --build |
+| 11 | Servicio payment-billing | cd rtm-payment-billing && docker compose up -d --build |
+| 12 | Servicio telemetry-gps | cd rtm-telemetry-gps && docker compose up -d --build |
+| 13 | API Gateway | cd rtm-api-gateway && docker compose up -d --build |
+| 14 | Frontend web | npm run dev |
+| 15 | Primer Super Admin | UPDATE iam.[user] ... (sección 12.2) |
 
 ## Anexo B. Comandos de operación
 
